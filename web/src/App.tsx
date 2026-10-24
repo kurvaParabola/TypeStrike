@@ -265,8 +265,8 @@ export function App() {
               </h2>
               <p className="text-xs md:text-sm font-sans text-gray-600 max-w-lg mx-auto">
                 {gameMode === 'PRACTICE'
-                  ? 'Atur tampilan avatarmu sebelum latihan melawan Bot AI.'
-                  : 'Siapkan karakter petarungmu sebelum memasuki Room Wager on-chain.'}
+                  ? 'Atur tampilan avatarmu sebelum latihan di Training Dojo.'
+                  : 'Siapkan hero gladiatormu sebelum bertarung di Colosseum Ranked on-chain.'}
               </p>
             </div>
 

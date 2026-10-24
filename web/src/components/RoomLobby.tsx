@@ -111,8 +111,8 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
         console.error('Onchain deposit failed:', err);
         setHostError(
           err.message?.includes('rejected')
-            ? 'Penyetoran wager dibatalkan di wallet.'
-            : `Gagal setor wager onchain: ${err.message || 'Transaksi gagal'}`
+            ? 'Penyetoran tiket arena dibatalkan di wallet.'
+            : `Gagal setor tiket arena ke vault: ${err.message || 'Transaksi gagal'}`
         );
         setIsDepositing(false);
         return;
@@ -183,8 +183,8 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
         console.error('Guest onchain deposit failed:', err);
         setJoinError(
           err.message?.includes('rejected')
-            ? 'Penyetoran wager dibatalkan di wallet.'
-            : `Gagal setor wager onchain: ${err.message || 'Transaksi gagal'}`
+            ? 'Penyetoran tiket arena dibatalkan di wallet.'
+            : `Gagal setor tiket arena ke vault: ${err.message || 'Transaksi gagal'}`
         );
         setIsJoining(false);
         setIsDepositing(false);
@@ -293,7 +293,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="font-pixel text-xs text-blockText flex items-center gap-1.5">
-                <Coins className="w-4 h-4 text-blockPurple" /> TARUHAN ON-CHAIN (MON)
+                <Coins className="w-4 h-4 text-blockPurple" /> TIKET ARENA & PRIZE POOL (MON)
               </label>
               {walletAddress && (
                 <label className="flex items-center gap-1.5 text-xs font-sans font-bold text-blockPurple cursor-pointer">
@@ -303,7 +303,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
                     onChange={(e) => setDepositOnchain(e.target.checked)}
                     className="w-4 h-4 rounded text-blockPurple focus:ring-blockPurple"
                   />
-                  <span>Setor ke Kontrak Escrow</span>
+                  <span>Kunci Prize Pool ke Smart Vault</span>
                 </label>
               )}
             </div>
@@ -331,10 +331,10 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
             <p className="text-[11px] font-sans text-gray-500 mt-2">
               {depositOnchain && walletAddress ? (
                 <span>
-                  Kamu dan lawan akan menyetor <strong>{wager} MON</strong> ke kontrak escrow on-chain. Total pot pemenang: <strong>{(parseFloat(wager) * 2).toFixed(2)} MON</strong>.
+                  Kedua gladiator menyetor tiket masuk <strong>{wager} MON</strong> ke vault. Total Trophy Prize Pool pemenang: <strong>{(parseFloat(wager) * 2).toFixed(2)} MON</strong>.
                 </span>
               ) : (
-                <span>Mode duel P2P langsung tanpa taruhan on-chain (saldo tidak terpotong).</span>
+                <span>Mode duel sparring persahabatan (gratis tanpa tiket masuk on-chain).</span>
               )}
             </p>
           </div>
@@ -381,7 +381,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
           {/* Onchain Tx status */}
           {hostTxHash && (
             <div className="p-2.5 bg-purple-50 border border-blockPurple rounded text-xs font-mono text-blockPurple flex items-center justify-between">
-              <span>Wager On-Chain Terdaftar!</span>
+              <span>Tiket Arena Terdaftar di Vault!</span>
               <a
                 href={`https://testnet.monadvision.com/tx/${hostTxHash}`}
                 target="_blank"
@@ -409,7 +409,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
               className="btn-block w-full py-4 bg-blockGrass hover:bg-emerald-500 text-white font-pixel text-sm flex items-center justify-center gap-2"
             >
               <Radio className="w-5 h-5 animate-pulse" />
-              <span>{isDepositing ? 'MENYETOR WAGER KE KONTRAK...' : 'BUKA ROOM & TUNGGU TEMAN'}</span>
+              <span>{isDepositing ? 'MENYETOR TIKET KE VAULT...' : 'BUKA ROOM & TUNGGU TEMAN'}</span>
             </button>
           )}
 
@@ -483,7 +483,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
           {/* Onchain Tx status for guest */}
           {guestTxHash && (
             <div className="p-2.5 bg-sky-50 border border-blockSky rounded text-xs font-mono text-blockSky flex items-center justify-between">
-              <span>Wager On-Chain Terdaftar!</span>
+              <span>Tiket Arena Terdaftar di Vault!</span>
               <a
                 href={`https://testnet.monadvision.com/tx/${guestTxHash}`}
                 target="_blank"

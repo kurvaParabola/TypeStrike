@@ -53,10 +53,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <Trophy className="w-5 h-5 fill-current" />
           </div>
           <h3 className="font-pixel text-xs text-blockText font-bold mb-1">
-            MONAD WAGER ESCROW
+            ON-CHAIN PRIZE VAULT
           </h3>
           <p className="text-xs text-gray-600 font-sans">
-            Bisa main latihan gratis atau tanding bertaruh token MON di Monad Testnet dengan pencairan instan.
+            Tanding sparring santai atau duel kompetitif memperebutkan Trophy Prize Pool di Monad dengan settlement instan.
           </p>
         </div>
       </div>

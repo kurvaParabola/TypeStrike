@@ -41,7 +41,7 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
   const handleContinue = () => {
     sound.playClick();
     if (selectedMode === 'WAGER' && !walletAddress) {
-      setConnectError('Harap sambungkan wallet terlebih dahulu untuk Mode Taruhan.');
+      setConnectError('Harap sambungkan wallet terlebih dahulu untuk memasuki Colosseum Ranked.');
       return;
     }
     onSelectMode(selectedMode);
@@ -51,10 +51,10 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
     <div className="w-full max-w-3xl mx-auto my-6 px-4 select-none">
       <div className="text-center mb-8">
         <h2 className="font-pixel text-xl md:text-3xl text-blockText font-black tracking-wide mb-2">
-          PILIH MODE PERMAINAN
+          PILIH ARENA PERTARUNGAN
         </h2>
         <p className="text-xs md:text-sm text-gray-600 font-sans max-w-md mx-auto">
-          Pilih mode latihan solo gratis atau mode taruhan on-chain dengan token MON.
+          Pilih Training Dojo untuk latihan kombo atau Colosseum Ranked untuk memperebutkan Trophy Prize Pool on-chain.
         </p>
       </div>
 
@@ -84,15 +84,15 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
           </div>
 
           <h3 className="font-pixel text-sm md:text-base text-blockText font-bold mb-1.5">
-            MODE LATIHAN (GRATIS)
+            TRAINING DOJO (CASUAL)
           </h3>
           <p className="text-xs text-gray-600 font-sans mb-4">
-            Uji refleks dan asah kecepatan jarimu melawan bot AI dengan kecepatan manusiawi. Tanpa biaya ataupun taruhan.
+            Latih kecepatan jari dan kombo proyektil senjata heromu melawan sparring bot. Bebas tiket masuk arena.
           </p>
 
           <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-800 font-bold bg-emerald-100/60 p-2 rounded border border-emerald-200">
             <CheckCircle2 className="w-4 h-4 text-blockGrass shrink-0" />
-            <span>Gratis · Cocok untuk pemanasan</span>
+            <span>Gratis · Cocok untuk pemanasan & asah kombo</span>
           </div>
         </div>
 
@@ -120,10 +120,10 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
           </div>
 
           <h3 className="font-pixel text-sm md:text-base text-blockText font-bold mb-1.5">
-            MODE TARUHAN (MONAD WAGER)
+            COLOSSEUM RANKED (1v1 ARENA)
           </h3>
           <p className="text-xs text-gray-600 font-sans mb-4">
-            Duel PvP kompetitif menggunakan smart contract escrow di Monad Testnet. Pemenang mendapatkan seluruh prize pool!
+            Duel gladiator 1v1 dengan tiket arena (Battle Stake) di Monad Vault. Sang juara membawa pulang Trophy Prize Pool!
           </p>
 
           {/* Wallet Status or Connect Action */}
