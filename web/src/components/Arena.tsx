@@ -32,6 +32,18 @@ export const Arena: React.FC<ArenaProps> = ({
   // Floating Combat Texts (Damage numbers, heals)
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
 
+  // Flying Letter / Attack Projectiles
+  const [projectiles, setProjectiles] = useState<{
+    id: string;
+    char: string;
+    from: 'player' | 'opponent';
+    buffType?: string;
+    isFinisher?: boolean;
+  }[]>([]);
+
+  // Impact bursts on avatars
+  const [impacts, setImpacts] = useState<{ id: string; x: number; y: number }[]>([]);
+
   // Screen shake & animations
   const [isShaking, setIsShaking] = useState(false);
   const [playerAttacking, setPlayerAttacking] = useState(false);
@@ -63,7 +75,7 @@ export const Arena: React.FC<ArenaProps> = ({
       setCountdown(null);
       sound.playCountdown(true);
       setWordStartTime(Date.now());
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 20);
     }, 3000);
 
     return () => {
@@ -72,6 +84,27 @@ export const Arena: React.FC<ArenaProps> = ({
       clearTimeout(c1);
     };
   }, []);
+
+  // Auto-focus immediately when countdown finishes
+  useEffect(() => {
+    if (countdown === null) {
+      inputRef.current?.focus();
+    }
+  }, [countdown]);
+
+  // Global keydown capture: automatically focus input if user presses any key
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (countdown !== null || isMatchOver.current) return;
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (document.activeElement !== inputRef.current) {
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [countdown]);
 
   // 2. Spawn Floating Text Helper
   const spawnFloatingText = (
@@ -87,12 +120,44 @@ export const Arena: React.FC<ArenaProps> = ({
     }, 1100);
   };
 
-  // 3. Opponent Bot Attack Loop (Types word every 0.9s - 1.5s)
+  // 3. Spawn Flying Letter Projectile & Impact Burst
+  const spawnProjectile = (
+    char: string,
+    from: 'player' | 'opponent',
+    buffType?: string,
+    isFinisher?: boolean
+  ) => {
+    const id = `proj_${Date.now()}_${Math.random()}`;
+    setProjectiles((prev) => [...prev, { id, char, from, buffType, isFinisher }]);
+
+    // Flight duration is 380ms -> trigger impact burst when hitting avatar
+    setTimeout(() => {
+      const impId = `imp_${Date.now()}_${Math.random()}`;
+      const targetX = from === 'player' ? 78 : 22;
+      setImpacts((prev) => [...prev, { id: impId, x: targetX, y: 48 }]);
+
+      setTimeout(() => {
+        setImpacts((prev) => prev.filter((i) => i.id !== impId));
+      }, 350);
+    }, 380);
+
+    // Clean up projectile after flight
+    setTimeout(() => {
+      setProjectiles((prev) => prev.filter((p) => p.id !== id));
+    }, 420);
+  };
+
+  // 4. Opponent Bot Attack Loop (Types word every 0.9s - 1.5s)
   useEffect(() => {
     if (countdown !== null || isMatchOver.current) return;
 
     const botAttackInterval = setInterval(() => {
       if (isMatchOver.current) return;
+
+      // Spawn bot attack projectile towards player
+      const botAttackWords = ['TEBAS', 'KILAT', 'TUSUK', 'SERANG', 'HANTAM'];
+      const botWord = botAttackWords[Math.floor(Math.random() * botAttackWords.length)];
+      spawnProjectile(botWord, 'opponent');
 
       // Bot attacks player
       const botDamage = 10 + Math.floor(Math.random() * 8);
@@ -134,12 +199,18 @@ export const Arena: React.FC<ArenaProps> = ({
     return () => clearInterval(botAttackInterval);
   }, [countdown, player.hp, player.shieldActive, opponent.id, onUpdatePlayerHp, onMatchFinished, screenShake, highestCrit]);
 
-  // 4. Handle typing input (case-insensitive, fast feedback)
+  // 5. Handle typing input (case-insensitive, fast feedback, flying letters)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (countdown !== null || isMatchOver.current) return;
 
     const rawValue = e.target.value.toUpperCase();
     const target = currentWord.word.toUpperCase();
+
+    // User pressed backspace
+    if (rawValue.length < userInput.length) {
+      setUserInput(rawValue);
+      return;
+    }
 
     // Verify prefix match
     if (!target.startsWith(rawValue)) {
@@ -148,6 +219,14 @@ export const Arena: React.FC<ArenaProps> = ({
     }
 
     sound.playKeypress();
+
+    // If new letter was typed, launch flying letter projectile!
+    if (rawValue.length > userInput.length) {
+      const charTyped = rawValue[rawValue.length - 1];
+      const isFinisher = rawValue === target;
+      spawnProjectile(charTyped, 'player', currentWord.buffType, isFinisher);
+    }
+
     setUserInput(rawValue);
 
     // Check if word is completed!
@@ -314,8 +393,43 @@ export const Arena: React.FC<ArenaProps> = ({
           </div>
         </div>
 
-        {/* Duel Arena: Avatars & Floating Damage Numbers */}
-        <div className="flex items-center justify-between gap-4 relative py-4">
+        {/* Duel Arena: Avatars, Letter Projectiles & Floating Damage Numbers */}
+        <div className="flex items-center justify-between gap-4 relative py-4 min-h-[200px]">
+          {/* Flying Letter / Attack Projectiles */}
+          {projectiles.map((p) => (
+            <div
+              key={p.id}
+              className={`absolute z-30 pointer-events-none select-none font-pixel font-black text-sm md:text-base px-2.5 py-1 rounded border-2 border-blockText shadow-block-sm flex items-center justify-center ${
+                p.from === 'player' ? 'animate-letter-strike' : 'animate-bot-strike'
+              } ${
+                p.buffType === 'HEAL'
+                  ? 'bg-emerald-400 text-white'
+                  : p.buffType === 'DOUBLE_DMG'
+                  ? 'bg-rose-500 text-white animate-pulse'
+                  : p.buffType === 'SHIELD'
+                  ? 'bg-sky-400 text-white'
+                  : p.from === 'opponent'
+                  ? 'bg-rose-600 text-white'
+                  : 'bg-blockSun text-blockText'
+              } ${p.isFinisher ? 'ring-2 ring-yellow-300 scale-125' : ''}`}
+            >
+              {p.char}
+            </div>
+          ))}
+
+          {/* Impact Bursts */}
+          {impacts.map((imp) => (
+            <div
+              key={imp.id}
+              style={{ left: `${imp.x}%`, top: `${imp.y}%` }}
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-35 pointer-events-none animate-impact"
+            >
+              <div className="w-14 h-14 rounded-full border-4 border-yellow-300 bg-amber-400/70 flex items-center justify-center font-pixel text-white shadow-block">
+                <Zap className="w-7 h-7 text-white fill-white" />
+              </div>
+            </div>
+          ))}
+
           {/* Player (Left) */}
           <div className="flex flex-col items-center w-5/12 relative">
             {/* Floating text on Player */}
@@ -449,14 +563,14 @@ export const Arena: React.FC<ArenaProps> = ({
             type="text"
             value={userInput}
             onChange={handleInputChange}
-            disabled={countdown !== null}
+            readOnly={countdown !== null}
             autoFocus
             autoComplete="off"
             autoCorrect="off"
             spellCheck="false"
             onPaste={(e) => e.preventDefault()}
-            placeholder={countdown !== null ? 'Menunggu...' : 'Ketik kata di atas...'}
-            className="w-full text-center px-4 py-3 border-[3px] border-blockText rounded-sm font-monoTyping text-2xl font-black text-blockText placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-blockGrass bg-white tracking-widest uppercase"
+            placeholder={countdown !== null ? 'Menunggu round mulai...' : 'Ketik kata di atas (langsung ketik)...'}
+            className="w-full text-center px-4 py-3 border-[3px] border-blockText rounded-sm font-monoTyping text-2xl font-black text-blockText placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-blockGrass bg-white tracking-widest uppercase cursor-text"
           />
         </div>
 

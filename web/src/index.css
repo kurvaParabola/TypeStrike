@@ -149,6 +149,80 @@
   animation: screen-shake-anim 0.3s ease-in-out;
 }
 
+/* Flying Letter Projectiles & Impacts */
+@keyframes letter-fly-p1-to-p2 {
+  0% {
+    left: 24%;
+    top: 48%;
+    transform: translate(-50%, -50%) scale(0.6) rotate(-15deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15) rotate(-5deg);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25) rotate(15deg);
+  }
+  100% {
+    left: 78%;
+    top: 48%;
+    transform: translate(-50%, -50%) scale(1.6) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes letter-fly-bot-to-p1 {
+  0% {
+    left: 76%;
+    top: 48%;
+    transform: translate(-50%, -50%) scale(0.6) rotate(15deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15) rotate(5deg);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25) rotate(-15deg);
+  }
+  100% {
+    left: 22%;
+    top: 48%;
+    transform: translate(-50%, -50%) scale(1.6) rotate(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes impact-burst {
+  0% {
+    transform: scale(0.4) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5) rotate(45deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2) rotate(90deg);
+    opacity: 0;
+  }
+}
+
+.animate-letter-strike {
+  animation: letter-fly-p1-to-p2 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-bot-strike {
+  animation: letter-fly-bot-to-p1 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-impact {
+  animation: impact-burst 0.35s ease-out forwards;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -162,3 +236,4 @@
   background: #6BBF59;
   border: 2px solid #2B3440;
 }
+
