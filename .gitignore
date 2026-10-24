@@ -1,0 +1,26 @@
+# Environment variables (NEVER COMMIT SENSITIVE KEYS)
+.env
+.env.local
+.env.*.local
+.env.test
+
+# Allow .env.example
+!.env.example
+
+# Foundry build artifacts & cache
+out/
+cache/
+
+# Broadcast files (contains transaction traces & sender info)
+broadcast/
+
+# Dependency directories
+node_modules/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/

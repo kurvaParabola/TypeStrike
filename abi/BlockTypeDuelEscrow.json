@@ -1,0 +1,579 @@
+[
+    {
+        "type":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "_trustedServer",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "WINNING_HITS",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "uint8",
+                            "internalType":  "uint8"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "cancelRoom",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "createRoom",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "payable"
+    },
+    {
+        "type":  "function",
+        "name":  "getRoom",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "tuple",
+                            "internalType":  "struct BlockTypeDuelEscrow.MatchRoom",
+                            "components":  [
+                                               {
+                                                   "name":  "player1",
+                                                   "type":  "address",
+                                                   "internalType":  "address"
+                                               },
+                                               {
+                                                   "name":  "player2",
+                                                   "type":  "address",
+                                                   "internalType":  "address"
+                                               },
+                                               {
+                                                   "name":  "wagerAmount",
+                                                   "type":  "uint256",
+                                                   "internalType":  "uint256"
+                                               },
+                                               {
+                                                   "name":  "status",
+                                                   "type":  "uint8",
+                                                   "internalType":  "enum BlockTypeDuelEscrow.MatchStatus"
+                                               },
+                                               {
+                                                   "name":  "winner",
+                                                   "type":  "address",
+                                                   "internalType":  "address"
+                                               },
+                                               {
+                                                   "name":  "p1Hits",
+                                                   "type":  "uint8",
+                                                   "internalType":  "uint8"
+                                               },
+                                               {
+                                                   "name":  "p2Hits",
+                                                   "type":  "uint8",
+                                                   "internalType":  "uint8"
+                                               }
+                                           ]
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "joinRoom",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "payable"
+    },
+    {
+        "type":  "function",
+        "name":  "owner",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "address"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "recordHit",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "striker",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "renounceOwnership",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "rooms",
+        "inputs":  [
+                       {
+                           "name":  "",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "player1",
+                            "type":  "address",
+                            "internalType":  "address"
+                        },
+                        {
+                            "name":  "player2",
+                            "type":  "address",
+                            "internalType":  "address"
+                        },
+                        {
+                            "name":  "wagerAmount",
+                            "type":  "uint256",
+                            "internalType":  "uint256"
+                        },
+                        {
+                            "name":  "status",
+                            "type":  "uint8",
+                            "internalType":  "enum BlockTypeDuelEscrow.MatchStatus"
+                        },
+                        {
+                            "name":  "winner",
+                            "type":  "address",
+                            "internalType":  "address"
+                        },
+                        {
+                            "name":  "p1Hits",
+                            "type":  "uint8",
+                            "internalType":  "uint8"
+                        },
+                        {
+                            "name":  "p2Hits",
+                            "type":  "uint8",
+                            "internalType":  "uint8"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "setTrustedServer",
+        "inputs":  [
+                       {
+                           "name":  "_newServer",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "settleMatch",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "winner",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "transferOwnership",
+        "inputs":  [
+                       {
+                           "name":  "newOwner",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "stateMutability":  "nonpayable"
+    },
+    {
+        "type":  "function",
+        "name":  "trustedGameServer",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "name":  "",
+                            "type":  "address",
+                            "internalType":  "address"
+                        }
+                    ],
+        "stateMutability":  "view"
+    },
+    {
+        "type":  "event",
+        "name":  "HitRecorded",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "indexed":  true,
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "striker",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "newHits",
+                           "type":  "uint8",
+                           "indexed":  false,
+                           "internalType":  "uint8"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "MatchSettled",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "indexed":  true,
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "winner",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "totalPrize",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "OwnershipTransferred",
+        "inputs":  [
+                       {
+                           "name":  "previousOwner",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "newOwner",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "RoomCancelled",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "indexed":  true,
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "player1",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "refundAmount",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "RoomCreated",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "indexed":  true,
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "player1",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "wagerAmount",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "RoomJoined",
+        "inputs":  [
+                       {
+                           "name":  "roomId",
+                           "type":  "bytes32",
+                           "indexed":  true,
+                           "internalType":  "bytes32"
+                       },
+                       {
+                           "name":  "player2",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "wagerAmount",
+                           "type":  "uint256",
+                           "indexed":  false,
+                           "internalType":  "uint256"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "event",
+        "name":  "TrustedServerUpdated",
+        "inputs":  [
+                       {
+                           "name":  "oldServer",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       },
+                       {
+                           "name":  "newServer",
+                           "type":  "address",
+                           "indexed":  true,
+                           "internalType":  "address"
+                       }
+                   ],
+        "anonymous":  false
+    },
+    {
+        "type":  "error",
+        "name":  "CannotPlaySelf",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "InvalidRoomId",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "InvalidStriker",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "InvalidWager",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "InvalidWinner",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "NotPlayer1",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "NotServer",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "OwnableInvalidOwner",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "OwnableUnauthorizedAccount",
+        "inputs":  [
+                       {
+                           "name":  "account",
+                           "type":  "address",
+                           "internalType":  "address"
+                       }
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "ReentrancyGuardReentrantCall",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "RoomAlreadyExists",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "RoomNotFound",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "RoomNotInProgress",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "RoomNotWaiting",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "TransferFailed",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "WagerMismatch",
+        "inputs":  [
+
+                   ]
+    },
+    {
+        "type":  "error",
+        "name":  "ZeroAddress",
+        "inputs":  [
+
+                   ]
+    }
+]
