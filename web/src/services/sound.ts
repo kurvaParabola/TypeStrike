@@ -51,7 +51,7 @@ class SoundService {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(380 + Math.random() * 80, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(420 + Math.random() * 80, this.ctx.currentTime);
 
     gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
     gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
@@ -82,6 +82,60 @@ class SoundService {
     osc.stop(this.ctx.currentTime + 0.12);
   }
 
+  // Fast sword slash sound
+  public playSlash() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(900, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.09);
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.09);
+  }
+
+  // Heavy Critical Damage Hit
+  public playCrit() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'square';
+    osc1.frequency.setValueAtTime(700, now);
+    osc1.frequency.exponentialRampToValueAtTime(120, now + 0.22);
+    osc2.frequency.setValueAtTime(350, now);
+    osc2.frequency.exponentialRampToValueAtTime(60, now + 0.22);
+
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.22);
+    osc2.stop(now + 0.22);
+  }
+
+  // Normal Hit sound
   public playHit() {
     if (this.isMuted) return;
     this.initCtx();
@@ -93,7 +147,56 @@ class SoundService {
 
     osc.type = 'square';
     osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+    osc.frequency.exponentialRampToValueAtTime(90, now + 0.15);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  }
+
+  // Healing buff sound (ascending arpeggio)
+  public playHeal() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const notes = [330, 440, 554, 659];
+    notes.forEach((freq, i) => {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime + i * 0.05;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    });
+  }
+
+  // Shield block sound (metallic clang)
+  public playShield() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1100, now);
+    osc.frequency.exponentialRampToValueAtTime(750, now + 0.2);
 
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
@@ -104,6 +207,7 @@ class SoundService {
     osc.stop(now + 0.2);
   }
 
+  // Countdown beep
   public playCountdown(isGo: boolean = false) {
     if (this.isMuted) return;
     this.initCtx();
@@ -126,12 +230,13 @@ class SoundService {
     osc.stop(now + (isGo ? 0.35 : 0.15));
   }
 
+  // Victory fanfare
   public playWin() {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    const notes = [440, 554, 659, 880];
+    const notes = [440, 554, 659, 880, 1108];
     notes.forEach((freq, i) => {
       if (!this.ctx) return;
       const now = this.ctx.currentTime + i * 0.1;
@@ -141,25 +246,26 @@ class SoundService {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, now);
 
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.25);
+      osc.stop(now + 0.28);
     });
   }
 
+  // Defeat jingle
   public playLose() {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    const notes = [300, 260, 220, 180];
+    const notes = [330, 290, 240, 190];
     notes.forEach((freq, i) => {
       if (!this.ctx) return;
-      const now = this.ctx.currentTime + i * 0.15;
+      const now = this.ctx.currentTime + i * 0.14;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 

@@ -14,10 +14,29 @@ export interface AvatarConfig {
 
 export type AvatarAnimation = 'idle' | 'typing' | 'attack' | 'hit' | 'win' | 'lose';
 
+export type WordBuffType = 'BASIC' | 'HEAL' | 'DOUBLE_DMG' | 'SHIELD';
+
+export interface CombatWord {
+  word: string;
+  buffType: WordBuffType;
+  buffLabel?: string;
+  buffIcon?: string;
+}
+
+export interface FloatingText {
+  id: string;
+  text: string;
+  type: 'damage' | 'crit' | 'heal' | 'shield';
+  target: 'player' | 'opponent';
+}
+
 export interface Player {
   id: string;
   nickname: string;
   avatar: AvatarConfig;
+  hp: number;
+  maxHp: number;
+  shieldActive: boolean;
   hits: number;
   wpm: number;
   accuracy: number;
@@ -27,21 +46,15 @@ export interface Player {
 
 export type GameScreen = 'HOME' | 'QUEUE' | 'VERSUS' | 'ARENA' | 'RESULT';
 
-export interface RoundStats {
-  roundNumber: number;
-  targetSentence: string;
-  winnerId: string | null;
-  timeTakenMs: number;
-  wpm: number;
-  accuracy: number;
-}
-
 export interface MatchStats {
   winnerId: string;
   finalScore: { player1: number; player2: number };
+  player1FinalHp: number;
+  player2FinalHp: number;
+  totalWordsTyped: number;
+  highestCritDamage: number;
   averageWpm: number;
   accuracy: number;
-  fastestRoundMs: number;
-  rounds: RoundStats[];
+  matchDurationSecs: number;
   onchainTxHash?: string;
 }

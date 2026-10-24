@@ -1,33 +1,115 @@
-import type { AvatarConfig, Player } from '../types';
+import type { AvatarConfig, Player, CombatWord, WordBuffType } from '../types';
 
-// Curated Indonesian sentences adhering to PRD Section 7:
-// 6-12 words, 35-80 chars, capital at start, simple punctuation (dots and commas).
-export const INDONESIAN_SENTENCES: string[] = [
-  "Kecepatan jari dan ketepatan ketik menentukan kemenangan di arena ini.",
-  "Setiap huruf yang kamu ketik membawa serangan telak ke arah lawan.",
-  "Monad mengeksekusi ribuan transaksi per detik tanpa jeda sama sekali.",
-  "Fokuskan pikiranmu, tarik napas dalam, dan ketik setiap kata dengan benar.",
-  "Pemain pertama yang berhasil meraih tujuh pukulan akan menjadi juara.",
-  "Pertarungan ketik cepat ini menguji konsentrasi serta kelincahan jarimu.",
-  "Koreksi setiap kesalahan ketik dengan segera sebelum melanjutkan kata berikutnya.",
-  "Serangan balok meluncur deras saat kalimat berhasil diselesaikan sempurna.",
-  "Kecepatan tanpa akurasi hanya akan memperlambat langkah kemenanganmu di sini.",
-  "Pertahankan ritme mengetikmu agar lawan tidak sempat membalas seranganmu.",
-  "Dua pendekar blok beradu ketangkasan kata demi memperebutkan mahkota juara.",
-  "Sentuhan keyboard fisik memberikan sensasi mengetik yang jauh lebih responsif.",
-  "Waktu terus berjalan cepat, jangan biarkan konsentrasimu terpecah di tengah ronde.",
-  "Ketukan demi ketukan mengalun cepat membawa petarung menuju garis finis.",
-  "Kemenangan sejati diraih oleh mereka yang pantang menyerah hingga akhir."
+// Curated 4-5 character Indonesian basic combat words
+export const BASIC_WORDS: string[] = [
+  'KILAT', 'PEDANG', 'BADAI', 'PANAH', 'CEPAT', 'ANGIN', 'FOKUS', 'TAJAM',
+  'TEBAS', 'BUSUR', 'SIAP', 'TITIK', 'LEBAR', 'KOKOH', 'PETIR', 'KERAS',
+  'TUSUK', 'TIKAM', 'PACU', 'KAPAK', 'PISAU', 'GAGAH', 'HEBAT', 'RACUN',
+  'DARAT', 'RIMBA', 'JEJAK', 'HANTU', 'BUSA', 'EMAS', 'PERAK', 'BATU',
+  'KAYU', 'BESI', 'BUMI', 'AWAN', 'KABUT', 'HUTAN', 'NYALA', 'SINAR'
 ];
 
-export function getSentenceForRound(roundNumber: number): string {
-  const index = (roundNumber - 1) % INDONESIAN_SENTENCES.length;
-  return INDONESIAN_SENTENCES[index];
+// Special Buff Words for Comeback Mechanic (< 30% HP)
+export const BUFF_HEAL_WORDS = ['PULIH', 'SEHAT', 'DARAH', 'SEGAR', 'HIDUP'];
+export const BUFF_RAGE_WORDS = ['MURKA', 'LEDAK', 'BAKAR', 'AMUK', 'KOBAR'];
+export const BUFF_SHIELD_WORDS = ['KEBAL', 'BAJA', 'KUAT', 'KOKOH', 'TAMENG'];
+
+/**
+ * Generates a combat word. If HP < 30%, has high chance to trigger a powerful buff word!
+ */
+export function getNextCombatWord(currentHp: number, previousWord?: string): CombatWord {
+  // Low HP (< 30%) Rage Mechanic: 50% chance for special buff word
+  if (currentHp <= 30 && Math.random() < 0.55) {
+    const roll = Math.random();
+
+    if (roll < 0.38) {
+      // HEAL Buff (+25 HP)
+      const word = pickRandom(BUFF_HEAL_WORDS, previousWord);
+      return {
+        word,
+        buffType: 'HEAL',
+        buffLabel: '+25 HP RECOVER',
+        buffIcon: '❤️',
+      };
+    } else if (roll < 0.72) {
+      // 2X DAMAGE / RAGE Buff
+      const word = pickRandom(BUFF_RAGE_WORDS, previousWord);
+      return {
+        word,
+        buffType: 'DOUBLE_DMG',
+        buffLabel: '2X DAMAGE RAGE',
+        buffIcon: '🔥',
+      };
+    } else {
+      // SHIELD Buff
+      const word = pickRandom(BUFF_SHIELD_WORDS, previousWord);
+      return {
+        word,
+        buffType: 'SHIELD',
+        buffLabel: 'PERISAI KEBAL',
+        buffIcon: '🛡️',
+      };
+    }
+  }
+
+  // Normal Basic Word
+  const word = pickRandom(BASIC_WORDS, previousWord);
+  return {
+    word,
+    buffType: 'BASIC',
+  };
 }
 
-// Bot Generator for F-13 (clearly labeled as AI Bot)
+function pickRandom(list: string[], exclude?: string): string {
+  const filtered = exclude ? list.filter((w) => w !== exclude) : list;
+  return filtered[Math.floor(Math.random() * filtered.length)];
+}
+
+/**
+ * Calculates attack damage based on typing speed (faster = higher damage)
+ * and active buff multipliers.
+ */
+export function calculateSpeedDamage(
+  timeTakenMs: number,
+  buffType: WordBuffType
+): { damage: number; isCrit: boolean; speedTier: string } {
+  let baseDamage = 11;
+  let isCrit = false;
+  let speedTier = 'NORMAL';
+
+  if (timeTakenMs <= 450) {
+    // Ultra fast (< 0.45s)
+    baseDamage = 22;
+    isCrit = true;
+    speedTier = '⚡ HYPER CRIT!';
+  } else if (timeTakenMs <= 800) {
+    // Fast (0.45s - 0.8s)
+    baseDamage = 17;
+    isCrit = true;
+    speedTier = '💥 CRIT!';
+  } else if (timeTakenMs <= 1300) {
+    // Solid (0.8s - 1.3s)
+    baseDamage = 13;
+    speedTier = 'BAGUS';
+  } else {
+    // Slower (> 1.3s)
+    baseDamage = 10;
+    speedTier = 'LAMBAT';
+  }
+
+  // Apply 2X Damage Buff if active
+  if (buffType === 'DOUBLE_DMG') {
+    baseDamage *= 2;
+    isCrit = true;
+    speedTier = '🔥 2X RAGE CRIT!';
+  }
+
+  return { damage: baseDamage, isCrit, speedTier };
+}
+
+// Bot Generator with 100 HP
 export function createAiBot(): Player {
-  const botNames = ['Bot_Kilat', 'Bot_Voxel', 'Bot_Monad', 'Bot_Cyber'];
+  const botNames = ['Bot_Kilat', 'Bot_Voxel', 'Bot_Monad', 'Bot_Ninja'];
   const name = botNames[Math.floor(Math.random() * botNames.length)];
 
   const botAvatar: AvatarConfig = {
@@ -44,8 +126,11 @@ export function createAiBot(): Player {
     id: `bot_${Date.now()}`,
     nickname: name,
     avatar: botAvatar,
+    hp: 100,
+    maxHp: 100,
+    shieldActive: false,
     hits: 0,
-    wpm: 65,
+    wpm: 70,
     accuracy: 98,
     progressPercent: 0,
     isBot: true,

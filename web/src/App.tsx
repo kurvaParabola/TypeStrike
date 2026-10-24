@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import type { AvatarConfig, Player, GameScreen, MatchStats, RoundStats } from './types';
+import { useState, useEffect } from 'react';
+import type { AvatarConfig, Player, GameScreen, MatchStats } from './types';
 import { Header } from './components/Header';
 import { AvatarEditor } from './components/AvatarEditor';
 import { Matchmaking } from './components/Matchmaking';
 import { Arena } from './components/Arena';
 import { MatchResult } from './components/MatchResult';
 import { sound } from './services/sound';
-import { getSentenceForRound, createAiBot } from './services/matchEngine';
+import { createAiBot } from './services/matchEngine';
 import { Monitor } from 'lucide-react';
 
 const DEFAULT_AVATAR: AvatarConfig = {
@@ -20,10 +20,9 @@ const DEFAULT_AVATAR: AvatarConfig = {
 };
 
 export function App() {
-  // Screen router
   const [screen, setScreen] = useState<GameScreen>('HOME');
 
-  // Player state & LocalStorage persistence (F-03)
+  // Player state & LocalStorage persistence
   const [nickname, setNickname] = useState<string>(() => {
     return localStorage.getItem('blocktype_nickname') || 'Pendekar';
   });
@@ -40,16 +39,19 @@ export function App() {
     return DEFAULT_AVATAR;
   });
 
-  // Settings
+  // Accessibility & audio settings
   const [isMuted, setIsMuted] = useState(() => sound.isMuted);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [screenShake, setScreenShake] = useState(true);
 
-  // Match state
+  // Combatants with 100 HP
   const [player, setPlayer] = useState<Player>({
     id: 'p1',
-    nickname: nickname || 'Pemain',
+    nickname: nickname || 'Pendekar',
     avatar: avatar,
+    hp: 100,
+    maxHp: 100,
+    shieldActive: false,
     hits: 0,
     wpm: 0,
     accuracy: 100,
@@ -57,17 +59,10 @@ export function App() {
   });
 
   const [opponent, setOpponent] = useState<Player | null>(null);
-  const [roundNumber, setRoundNumber] = useState(1);
-  const [targetSentence, setTargetSentence] = useState('');
-  const [roundsStats, setRoundsStats] = useState<RoundStats[]>([]);
-  const [lastRoundWinner, setLastRoundWinner] = useState<'player' | 'opponent' | 'timeout' | null>(null);
-  const [lastRoundDiffMs, setLastRoundDiffMs] = useState<number>(0);
-  const [roundBannerActive, setRoundBannerActive] = useState(false);
+  const [matchStartTime, setMatchStartTime] = useState<number>(0);
+  const [highestCrit, setHighestCrit] = useState<number>(0);
 
-  // Bot simulation timer ref
-  const botIntervalRef = useRef<number | null>(null);
-
-  // Save nickname and avatar to localStorage on change
+  // LocalStorage sync
   useEffect(() => {
     localStorage.setItem('blocktype_nickname', nickname);
   }, [nickname]);
@@ -76,63 +71,23 @@ export function App() {
     localStorage.setItem('blocktype_avatar', JSON.stringify(avatar));
   }, [avatar]);
 
-  // Sync player object with nickname/avatar
   useEffect(() => {
     setPlayer((prev) => ({
       ...prev,
-      nickname: nickname || 'Pemain_1',
+      nickname: nickname || 'Pendekar',
       avatar: avatar,
     }));
   }, [nickname, avatar]);
-
-  // Bot typing simulation (F-13)
-  useEffect(() => {
-    if (screen !== 'ARENA' || !opponent?.isBot || roundBannerActive) {
-      if (botIntervalRef.current) clearInterval(botIntervalRef.current);
-      return;
-    }
-
-    // Bot types with human-like pace: 60-80 WPM
-    const botWpm = 65 + Math.floor(Math.random() * 20);
-    const totalChars = targetSentence.length || 50;
-    const estimatedTotalMs = ((totalChars / 5) / botWpm) * 60 * 1000;
-    const intervalStepMs = 150;
-    const stepPercent = (intervalStepMs / estimatedTotalMs) * 100;
-
-    let currentPercent = 0;
-
-    botIntervalRef.current = window.setInterval(() => {
-      currentPercent += stepPercent + (Math.random() * 2 - 1);
-
-      if (currentPercent >= 100) {
-        if (botIntervalRef.current) clearInterval(botIntervalRef.current);
-        currentPercent = 100;
-        setOpponent((prev) => (prev ? { ...prev, progressPercent: 100 } : null));
-
-        // Opponent bot finished first!
-        handleOpponentFinishedRound(estimatedTotalMs);
-      } else {
-        setOpponent((prev) =>
-          prev ? { ...prev, progressPercent: Math.min(currentPercent, 98), wpm: botWpm } : null
-        );
-      }
-    }, intervalStepMs);
-
-    return () => {
-      if (botIntervalRef.current) clearInterval(botIntervalRef.current);
-    };
-  }, [screen, opponent?.isBot, roundNumber, roundBannerActive, targetSentence]);
 
   // Start matchmaking queue
   const handleStartQueue = () => {
     setScreen('QUEUE');
 
-    // Simulate matchmaking: after 4 seconds, either find opponent or bot
     setTimeout(() => {
       const matchedOpponent = createAiBot();
       setOpponent(matchedOpponent);
       setScreen('VERSUS');
-    }, 4000);
+    }, 3500);
   };
 
   // Start with AI bot directly
@@ -144,139 +99,77 @@ export function App() {
 
   // Transition from Versus screen to Arena
   const handleVersusComplete = () => {
-    setRoundNumber(1);
-    setPlayer((prev) => ({ ...prev, hits: 0, progressPercent: 0 }));
-    setOpponent((prev) => (prev ? { ...prev, hits: 0, progressPercent: 0 } : null));
-    setRoundsStats([]);
-    setTargetSentence(getSentenceForRound(1));
+    setPlayer((prev) => ({
+      ...prev,
+      hp: 100,
+      maxHp: 100,
+      shieldActive: false,
+    }));
+
+    setOpponent((prev) =>
+      prev
+        ? {
+            ...prev,
+            hp: 100,
+            maxHp: 100,
+            shieldActive: false,
+          }
+        : createAiBot()
+    );
+
+    setMatchStartTime(Date.now());
+    setHighestCrit(0);
     setScreen('ARENA');
   };
 
-  // Player finished typing sentence correctly (F-25)
-  const handlePlayerFinishedSentence = (timeTakenMs: number, wpm: number, accuracy: number) => {
-    if (roundBannerActive) return;
-
-    if (botIntervalRef.current) clearInterval(botIntervalRef.current);
-
-    const newHits = player.hits + 1;
-    setPlayer((prev) => ({ ...prev, hits: newHits, wpm, accuracy }));
-
-    const roundStat: RoundStats = {
-      roundNumber,
-      targetSentence,
-      winnerId: player.id,
-      timeTakenMs,
-      wpm,
-      accuracy,
-    };
-    setRoundsStats((prev) => [...prev, roundStat]);
-
-    setLastRoundWinner('player');
-    setLastRoundDiffMs(Math.round(400 + Math.random() * 800));
-    setRoundBannerActive(true);
-
-    // Check if match won (Rule #6: 7 hits to win)
-    if (newHits >= 7) {
-      setTimeout(() => {
-        setRoundBannerActive(false);
-        setScreen('RESULT');
-      }, 2000);
-      return;
-    }
-
-    // Next round after 2 seconds (F-40)
-    setTimeout(() => {
-      setRoundBannerActive(false);
-      setLastRoundWinner(null);
-      setRoundNumber((r) => r + 1);
-      setTargetSentence(getSentenceForRound(roundNumber + 1));
-      setOpponent((prev) => (prev ? { ...prev, progressPercent: 0 } : null));
-    }, 2000);
+  // HP update handlers
+  const handleUpdatePlayerHp = (newHp: number, shieldActive: boolean) => {
+    setPlayer((prev) => ({
+      ...prev,
+      hp: newHp,
+      shieldActive,
+    }));
   };
 
-  // Opponent finished first
-  const handleOpponentFinishedRound = (botTimeMs: number) => {
-    if (roundBannerActive || !opponent) return;
-
-    const newHits = opponent.hits + 1;
-    setOpponent((prev) => (prev ? { ...prev, hits: newHits } : null));
-
-    const roundStat: RoundStats = {
-      roundNumber,
-      targetSentence,
-      winnerId: opponent.id,
-      timeTakenMs: botTimeMs,
-      wpm: opponent.wpm,
-      accuracy: 98,
-    };
-    setRoundsStats((prev) => [...prev, roundStat]);
-
-    setLastRoundWinner('opponent');
-    setLastRoundDiffMs(Math.round(300 + Math.random() * 600));
-    setRoundBannerActive(true);
-
-    // Check if opponent reached 7 hits
-    if (newHits >= 7) {
-      setTimeout(() => {
-        setRoundBannerActive(false);
-        setScreen('RESULT');
-      }, 2000);
-      return;
-    }
-
-    // Next round
-    setTimeout(() => {
-      setRoundBannerActive(false);
-      setLastRoundWinner(null);
-      setRoundNumber((r) => r + 1);
-      setTargetSentence(getSentenceForRound(roundNumber + 1));
-      setOpponent((prev) => (prev ? { ...prev, progressPercent: 0 } : null));
-    }, 2000);
+  const handleUpdateOpponentHp = (newHp: number, shieldActive: boolean) => {
+    setOpponent((prev) =>
+      prev
+        ? {
+            ...prev,
+            hp: newHp,
+            shieldActive,
+          }
+        : null
+    );
   };
 
-  // Round 30s timeout (F-41)
-  const handleRoundTimeout = () => {
-    setLastRoundWinner('timeout');
-    setRoundBannerActive(true);
-
+  // Match finished (One combatant reached 0 HP)
+  const handleMatchFinished = (_winnerId: string, finalCrit: number) => {
+    setHighestCrit(finalCrit);
     setTimeout(() => {
-      setRoundBannerActive(false);
-      setLastRoundWinner(null);
-      setRoundNumber((r) => r + 1);
-      setTargetSentence(getSentenceForRound(roundNumber + 1));
-      setOpponent((prev) => (prev ? { ...prev, progressPercent: 0 } : null));
-    }, 2000);
+      setScreen('RESULT');
+    }, 800);
   };
 
-  // Calculate Match Statistics (F-51)
+  // Compute final match stats for result screen
   const calculateMatchStats = (): MatchStats => {
-    const playerRounds = roundsStats.filter((r) => r.winnerId === player.id);
-    const avgWpm =
-      playerRounds.length > 0
-        ? Math.round(playerRounds.reduce((acc, cur) => acc + cur.wpm, 0) / playerRounds.length)
-        : 68;
-
-    const avgAcc =
-      playerRounds.length > 0
-        ? Math.round(playerRounds.reduce((acc, cur) => acc + cur.accuracy, 0) / playerRounds.length)
-        : 97;
-
-    const fastestMs =
-      playerRounds.length > 0
-        ? Math.min(...playerRounds.map((r) => r.timeTakenMs))
-        : 5200;
+    const durationSecs = Math.max(1, Math.round((Date.now() - matchStartTime) / 1000));
+    const winnerId = player.hp > 0 ? player.id : (opponent?.id || 'opponent');
 
     return {
-      winnerId: player.hits >= 7 ? player.id : (opponent?.id || 'opponent'),
+      winnerId,
       finalScore: {
-        player1: player.hits,
-        player2: opponent?.hits || 0,
+        player1: player.hp,
+        player2: opponent?.hp || 0,
       },
-      averageWpm: avgWpm,
-      accuracy: avgAcc,
-      fastestRoundMs: fastestMs,
-      rounds: roundsStats,
-      onchainTxHash: '0x8f4b73c21a9e3d8f...74143', // Simulated Monad testnet tx hash
+      player1FinalHp: player.hp,
+      player2FinalHp: opponent?.hp || 0,
+      totalWordsTyped: Math.round(durationSecs * 1.2),
+      highestCritDamage: highestCrit || 22,
+      averageWpm: 75,
+      accuracy: 98,
+      matchDurationSecs: durationSecs,
+      onchainTxHash: '0x54dF...A994',
     };
   };
 
@@ -294,8 +187,8 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-6 w-full max-w-6xl mx-auto">
-        {/* Responsive Desktop Notice (PRD Section 12) */}
+      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-6 w-full max-w-5xl mx-auto">
+        {/* Desktop Notice */}
         <div className="lg:hidden w-full mb-3 p-2 bg-amber-100 border border-amber-300 rounded text-center text-xs font-sans font-semibold text-amber-900 flex items-center justify-center gap-1.5">
           <Monitor className="w-3.5 h-3.5" /> Main terbaik di desktop dengan keyboard fisik.
         </div>
@@ -305,10 +198,10 @@ export function App() {
           <div className="w-full">
             <div className="text-center mb-6">
               <h2 className="font-pixel text-xl md:text-3xl text-blockText font-black tracking-wide mb-2">
-                ARENA DUEL KETIK CEPAT 1v1
+                ARENA DUEL KATA RAPID 1v1
               </h2>
               <p className="text-xs md:text-sm font-sans text-gray-600 max-w-lg mx-auto">
-                Kustomisasi karakter blokmu, masuk antrean duel, dan cetak 7 hit lebih dulu untuk menang!
+                Ketik kata per kata secepat kilat untuk melancarkan sabetan combo! Makin cepat ketik, makin besar damagenya!
               </p>
             </div>
 
@@ -334,20 +227,15 @@ export function App() {
           />
         )}
 
-        {/* Screen 4: Arena (Game Core) */}
+        {/* Screen 4: Real-Time Word Combat Arena */}
         {screen === 'ARENA' && opponent && (
           <Arena
             player={player}
             opponent={opponent}
-            targetSentence={targetSentence}
-            roundNumber={roundNumber}
             screenShake={screenShake}
-            onSentenceFinished={handlePlayerFinishedSentence}
-            onOpponentHitReceived={() => {}}
-            onRoundTimeout={handleRoundTimeout}
-            lastRoundWinner={lastRoundWinner}
-            lastRoundDiffMs={lastRoundDiffMs}
-            roundBannerActive={roundBannerActive}
+            onUpdatePlayerHp={handleUpdatePlayerHp}
+            onUpdateOpponentHp={handleUpdateOpponentHp}
+            onMatchFinished={handleMatchFinished}
           />
         )}
 
@@ -357,7 +245,7 @@ export function App() {
             player={player}
             opponent={opponent}
             stats={calculateMatchStats()}
-            isWinner={player.hits >= 7}
+            isWinner={player.hp > 0}
             onRematch={handleVersusComplete}
             onFindNewMatch={handleStartQueue}
             onGoHome={() => setScreen('HOME')}

@@ -3,7 +3,7 @@ import type { Player, MatchStats } from '../types';
 import { Avatar } from './Avatar';
 import { sound } from '../services/sound';
 import confetti from 'canvas-confetti';
-import { Trophy, Skull, RotateCcw, Search, Home, Share2, Check, ExternalLink } from 'lucide-react';
+import { Trophy, Skull, RotateCcw, Search, Home, Share2, Check, ExternalLink, Zap, Heart } from 'lucide-react';
 
 interface MatchResultProps {
   player: Player;
@@ -28,13 +28,12 @@ export const MatchResult: React.FC<MatchResultProps> = ({
   const [rematchRequested, setRematchRequested] = useState(false);
   const [rematchCountdown, setRematchCountdown] = useState(15);
 
-  // Trigger sound & confetti on mount
   useEffect(() => {
     if (isWinner) {
       sound.playWin();
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 90,
+        spread: 75,
         origin: { y: 0.6 },
         colors: ['#6BBF59', '#4FA8E0', '#F6C945', '#9B84D9'],
       });
@@ -43,7 +42,6 @@ export const MatchResult: React.FC<MatchResultProps> = ({
     }
   }, [isWinner]);
 
-  // F-53: 15-second countdown when rematch is requested
   useEffect(() => {
     if (!rematchRequested) return;
 
@@ -64,8 +62,8 @@ export const MatchResult: React.FC<MatchResultProps> = ({
   const handleShare = () => {
     sound.playClick();
     const shareText = `⚔️ BlockType Duel di Monad!\n${
-      isWinner ? '🏆 AKU MENANG!' : '💀 Kalah tipis!'
-    }\nSkor: ${stats.finalScore.player1} - ${stats.finalScore.player2}\n⚡ Rata-rata WPM: ${stats.averageWpm}\n🎯 Akurasi: ${stats.accuracy}%\nMainkan sekarang: https://github.com/kurvaParabola/TypeStrike`;
+      isWinner ? '🏆 K.O. VICTORY!' : '💀 Kalah duel!'
+    }\nSisa HP: ${stats.player1FinalHp} HP vs ${stats.player2FinalHp} HP\n⚡ Serangan Crit Tertinggi: ${stats.highestCritDamage} DMG\nMainkan sekarang: https://github.com/kurvaParabola/TypeStrike`;
 
     navigator.clipboard.writeText(shareText);
     setCopied(true);
@@ -74,7 +72,7 @@ export const MatchResult: React.FC<MatchResultProps> = ({
 
   return (
     <div className="w-full max-w-3xl mx-auto card-block p-8 md:p-10 my-6 bg-white text-center relative overflow-hidden">
-      {/* Result Title (F-50) */}
+      {/* Result Header */}
       <div className="mb-6">
         {isWinner ? (
           <div className="flex flex-col items-center">
@@ -82,10 +80,10 @@ export const MatchResult: React.FC<MatchResultProps> = ({
               <Trophy className="w-8 h-8 text-blockText" />
             </div>
             <h2 className="font-pixel text-2xl md:text-3xl text-blockGrass font-black tracking-wide">
-              VICTORY!
+              K.O. VICTORY!
             </h2>
             <p className="font-mono text-xs text-gray-500 font-bold mt-1">
-              Kamu berhasil mencapai 7 hit lebih dulu!
+              Kamu berhasil menumbangkan HP lawan menjadi 0!
             </p>
           </div>
         ) : (
@@ -94,18 +92,18 @@ export const MatchResult: React.FC<MatchResultProps> = ({
               <Skull className="w-8 h-8 text-white" />
             </div>
             <h2 className="font-pixel text-2xl md:text-3xl text-blockCoral font-black tracking-wide">
-              DEFEAT
+              K.O. DEFEAT
             </h2>
             <p className="font-mono text-xs text-gray-500 font-bold mt-1">
-              Lawan mencapai 7 hit lebih dulu. Ayo balas dendam!
+              HP kamu habis. Ayo coba lagi dan balas serangan lawan!
             </p>
           </div>
         )}
       </div>
 
-      {/* Avatars Comparison */}
+      {/* Avatars Duel Result Stage */}
       <div className="flex items-center justify-center gap-8 md:gap-16 my-6 py-4 bg-blockCream border-2 border-blockText rounded-sm shadow-inner">
-        {/* Player (Self) */}
+        {/* Player */}
         <div className="flex flex-col items-center">
           <Avatar
             config={player.avatar}
@@ -117,14 +115,16 @@ export const MatchResult: React.FC<MatchResultProps> = ({
           <span className="font-pixel text-sm font-bold text-blockText mt-3">
             {player.nickname}
           </span>
-          <span className="font-pixel text-xl font-black text-blockGrass mt-1">
-            {stats.finalScore.player1} HIT
+          <span className={`font-mono text-sm font-black mt-1 flex items-center gap-1 ${
+            stats.player1FinalHp > 0 ? 'text-blockGrass' : 'text-gray-400'
+          }`}>
+            <Heart className="w-3.5 h-3.5 fill-current" /> {stats.player1FinalHp} HP
           </span>
         </div>
 
-        {/* Score Divider */}
+        {/* Divider */}
         <div className="font-pixel text-2xl font-black text-blockText">
-          -
+          VS
         </div>
 
         {/* Opponent */}
@@ -139,36 +139,33 @@ export const MatchResult: React.FC<MatchResultProps> = ({
           <span className="font-pixel text-sm font-bold text-blockText mt-3">
             {opponent.nickname}
           </span>
-          <span className="font-pixel text-xl font-black text-blockCoral mt-1">
-            {stats.finalScore.player2} HIT
+          <span className={`font-mono text-sm font-black mt-1 flex items-center gap-1 ${
+            stats.player2FinalHp > 0 ? 'text-blockCoral' : 'text-gray-400'
+          }`}>
+            <Heart className="w-3.5 h-3.5 fill-current" /> {stats.player2FinalHp} HP
           </span>
         </div>
       </div>
 
-      {/* Match Stats Grid (F-51) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-6">
+      {/* Combat Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 my-6">
         <div className="card-block-sm p-3 text-center">
-          <span className="text-[10px] font-pixel text-gray-500 block mb-1">RATA-RATA WPM</span>
+          <span className="text-[10px] font-pixel text-gray-500 block mb-1">CRIT TERTINGGI</span>
+          <span className="font-mono text-xl font-bold text-blockCoral flex items-center justify-center gap-1">
+            <Zap className="w-4 h-4 fill-current text-yellow-500" />
+            {stats.highestCritDamage || 22} DMG
+          </span>
+        </div>
+        <div className="card-block-sm p-3 text-center">
+          <span className="text-[10px] font-pixel text-gray-500 block mb-1">SISA HP KAMU</span>
           <span className="font-mono text-xl font-bold text-blockGrass">
-            {stats.averageWpm}
+            {stats.player1FinalHp} / 100
           </span>
         </div>
-        <div className="card-block-sm p-3 text-center">
-          <span className="text-[10px] font-pixel text-gray-500 block mb-1">AKURASI</span>
+        <div className="card-block-sm p-3 text-center col-span-2 md:col-span-1">
+          <span className="text-[10px] font-pixel text-gray-500 block mb-1">DURASI DUEL</span>
           <span className="font-mono text-xl font-bold text-blockSky">
-            {stats.accuracy}%
-          </span>
-        </div>
-        <div className="card-block-sm p-3 text-center">
-          <span className="text-[10px] font-pixel text-gray-500 block mb-1">RONDE TERCEPAT</span>
-          <span className="font-mono text-xl font-bold text-blockPurple">
-            {(stats.fastestRoundMs / 1000).toFixed(1)}s
-          </span>
-        </div>
-        <div className="card-block-sm p-3 text-center">
-          <span className="text-[10px] font-pixel text-gray-500 block mb-1">TOTAL RONDE</span>
-          <span className="font-mono text-xl font-bold text-blockText">
-            {stats.rounds.length}
+            {stats.matchDurationSecs} detik
           </span>
         </div>
       </div>
@@ -181,11 +178,11 @@ export const MatchResult: React.FC<MatchResultProps> = ({
               ⚡ ON-CHAIN SETTLEMENT MONAD
             </span>
             <span className="font-mono text-[11px] text-gray-600 truncate block max-w-md">
-              Tx: {stats.onchainTxHash}
+              Kontrak Escrow: 0x54dF...A994
             </span>
           </div>
           <a
-            href={`https://testnet.monadexplorer.com/tx/${stats.onchainTxHash}`}
+            href="https://testnet.monadexplorer.com/address/0x54dF67541a74121e0C6179757d22Ea466DdcA994"
             target="_blank"
             rel="noreferrer"
             className="btn-block px-3 py-1 bg-blockPurple text-white text-[11px] font-pixel flex items-center gap-1"
@@ -195,7 +192,7 @@ export const MatchResult: React.FC<MatchResultProps> = ({
         </div>
       )}
 
-      {/* Action Buttons (F-52 & F-53) */}
+      {/* Action Buttons */}
       <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center items-center">
         {/* Rematch */}
         <button
@@ -228,17 +225,16 @@ export const MatchResult: React.FC<MatchResultProps> = ({
           <Search className="w-4 h-4" /> CARI LAWAN BARU
         </button>
 
-        {/* Bagikan Hasil (F-54) */}
+        {/* Bagikan */}
         <button
           onClick={handleShare}
           className="w-full sm:w-auto btn-block px-4 py-3 bg-blockSun hover:bg-yellow-400 text-blockText text-xs md:text-sm font-pixel flex items-center justify-center gap-1.5"
-          title="Salin ringkasan hasil pertandingan"
         >
           {copied ? <Check className="w-4 h-4 text-emerald-800" /> : <Share2 className="w-4 h-4" />}
           {copied ? 'TERSALIN!' : 'BAGIKAN'}
         </button>
 
-        {/* Kembali ke Home */}
+        {/* Home */}
         <button
           onClick={() => {
             sound.playClick();
