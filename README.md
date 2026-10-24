@@ -1,6 +1,6 @@
 # ⚔️ TypeStrike — 1v1 PvP Typing Arena on Monad
 
-![TypeStrike Banner](./typestrike_banner.jpg)
+
 
 > **Fast-paced 1v1 PvP Web3 Typing Combat Game with Pixel-Art RPG Aesthetics on Monad.**  
 > Turn your typing speed, accuracy, and reflexes into deadly projectile attacks! Duel other players in real-time and compete for on-chain Trophy Prize Pools.
