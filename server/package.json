@@ -1,0 +1,26 @@
+{
+  "name": "blocktypeduel-server",
+  "version": "1.0.0",
+  "description": "Authoritative WebSocket Game Server & Monad Escrow Settlement for BlockTypeDuel",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["monad", "websocket", "typing-game", "pvp", "escrow"],
+  "author": "BlockTypeDuel",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "viem": "^2.22.8",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
