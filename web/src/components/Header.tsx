@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="font-pixel text-sm md:text-base text-blockText font-black tracking-wide leading-none">
-              BLOCKTYPE<span className="text-blockSky">DUEL</span>
+              TYPE<span className="text-blockSky">STRIKE</span>
             </h1>
             <p className="text-[10px] font-mono text-gray-500 font-semibold leading-tight">
               1v1 PvP Typing Arena · Monad

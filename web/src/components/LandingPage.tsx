@@ -12,14 +12,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center my-6 md:my-12 px-4 select-none">
       {/* Monad Chain Pill */}
-      <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 border-2 border-blockPurple rounded-full text-xs font-mono font-bold text-blockPurple mb-4 shadow-block-sm">
-        <Zap className="w-3.5 h-3.5 fill-current" />
-        <span>POWERED BY MONAD BLOCKCHAIN</span>
-      </div>
 
       {/* Main Hero Title */}
-      <h1 className="font-pixel text-3xl md:text-5xl lg:text-6xl text-blockText font-black tracking-wide leading-tight mb-3">
-        BLOCKTYPE<span className="text-blockSky">DUEL</span>
+      <h1 className="font-pixel text-4xl md:text-6xl lg:text-7xl text-blockText font-black tracking-wide leading-tight mb-3">
+        TYPE<span className="text-blockSky">STRIKE</span>
       </h1>
 
       <p className="font-sans text-sm md:text-base text-gray-600 max-w-xl mb-8 leading-relaxed font-semibold">

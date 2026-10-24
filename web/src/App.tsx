@@ -37,11 +37,11 @@ export function App() {
 
   // Player state & LocalStorage persistence
   const [nickname, setNickname] = useState<string>(() => {
-    return localStorage.getItem('blocktype_nickname') || 'Pendekar';
+    return localStorage.getItem('typestrike_nickname') || localStorage.getItem('blocktype_nickname') || 'Pendekar';
   });
 
   const [avatar, setAvatar] = useState<AvatarConfig>(() => {
-    const saved = localStorage.getItem('blocktype_avatar');
+    const saved = localStorage.getItem('typestrike_avatar') || localStorage.getItem('blocktype_avatar');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -59,7 +59,7 @@ export function App() {
 
   // Player role state
   const [role, setRole] = useState<PlayerRole>(() => {
-    return (localStorage.getItem('blocktype_role') as PlayerRole) || 'FIGHTER';
+    return (localStorage.getItem('typestrike_role') as PlayerRole) || (localStorage.getItem('blocktype_role') as PlayerRole) || 'FIGHTER';
   });
 
   // Combatants with dynamic HP based on role
@@ -84,15 +84,15 @@ export function App() {
 
   // LocalStorage sync
   useEffect(() => {
-    localStorage.setItem('blocktype_nickname', nickname);
+    localStorage.setItem('typestrike_nickname', nickname);
   }, [nickname]);
 
   useEffect(() => {
-    localStorage.setItem('blocktype_avatar', JSON.stringify(avatar));
+    localStorage.setItem('typestrike_avatar', JSON.stringify(avatar));
   }, [avatar]);
 
   useEffect(() => {
-    localStorage.setItem('blocktype_role', role);
+    localStorage.setItem('typestrike_role', role);
     const roleDef = getRoleDefinition(role);
     setPlayer((prev) => ({
       ...prev,
@@ -329,7 +329,7 @@ export function App() {
 
       {/* Footer */}
       <footer className="w-full py-3 px-4 border-t-2 border-blockText/20 bg-white/60 text-center text-[11px] font-mono text-gray-500">
-        BlockType Duel · Built for Monad Blitz Hackathon · Contract:{' '}
+        TypeStrike · Built for Monad Blitz Hackathon · Contract:{' '}
         <a
           href="https://testnet.monadexplorer.com/address/0x54dF67541a74121e0C6179757d22Ea466DdcA994"
           target="_blank"

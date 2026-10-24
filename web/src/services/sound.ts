@@ -3,7 +3,7 @@ class SoundService {
   public isMuted: boolean = false;
 
   constructor() {
-    const saved = localStorage.getItem('blocktype_sound_muted');
+    const saved = localStorage.getItem('typestrike_sound_muted') || localStorage.getItem('blocktype_sound_muted');
     this.isMuted = saved === 'true';
   }
 
@@ -19,7 +19,7 @@ class SoundService {
 
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
-    localStorage.setItem('blocktype_sound_muted', String(this.isMuted));
+    localStorage.setItem('typestrike_sound_muted', String(this.isMuted));
     return this.isMuted;
   }
 
