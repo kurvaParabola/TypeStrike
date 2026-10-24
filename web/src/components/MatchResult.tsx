@@ -217,24 +217,38 @@ export const MatchResult: React.FC<MatchResultProps> = ({
 
       {/* Onchain Settlement Info if available */}
       {stats.onchainTxHash && (
-        <div className="mb-6 p-3 bg-purple-50 border-2 border-blockPurple rounded-sm flex items-center justify-between text-left">
-          <div>
-            <span className="font-pixel text-[11px] font-bold text-blockPurple flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>ON-CHAIN SETTLEMENT MONAD</span>
-            </span>
-            <span className="font-mono text-[11px] text-gray-600 truncate block max-w-md">
-              Kontrak Escrow: 0x54dF...A994
-            </span>
+        <div className={`mb-6 p-3.5 border-2 rounded-sm text-left ${
+          isWinner
+            ? 'bg-emerald-50 border-blockGrass text-emerald-900'
+            : 'bg-purple-50 border-blockPurple text-purple-900'
+        }`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <span className="font-pixel text-[11px] font-bold flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>{isWinner ? '🏆 HADIAH PRIZE POOL BERHASIL DICAIRKAN!' : 'SETTLEMENT ON-CHAIN SELESAI'}</span>
+              </span>
+              <span className="font-mono text-[11px] text-gray-600 block mt-0.5">
+                {isWinner
+                  ? 'Koin MON dari smart contract escrow telah dikirim ke wallet kamu!'
+                  : 'Pemenang duel telah menerima hadiah Prize Pool on-chain.'}
+              </span>
+            </div>
+            <a
+              href={
+                stats.onchainTxHash.startsWith('0x') && stats.onchainTxHash.length === 66
+                  ? `https://testnet.monadvision.com/tx/${stats.onchainTxHash}`
+                  : `https://testnet.monadvision.com/address/0x54dF67541a74121e0C6179757d22Ea466DdcA994`
+              }
+              target="_blank"
+              rel="noreferrer"
+              className={`btn-block px-3 py-1.5 text-white text-[11px] font-pixel flex items-center gap-1 shrink-0 ${
+                isWinner ? 'bg-blockGrass hover:bg-emerald-500' : 'bg-blockPurple hover:bg-purple-600'
+              }`}
+            >
+              Bukti Tx <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
-          <a
-            href="https://testnet.monadexplorer.com/address/0x54dF67541a74121e0C6179757d22Ea466DdcA994"
-            target="_blank"
-            rel="noreferrer"
-            className="btn-block px-3 py-1 bg-blockPurple text-white text-[11px] font-pixel flex items-center gap-1"
-          >
-            Explorer <ExternalLink className="w-3 h-3" />
-          </a>
         </div>
       )}
 

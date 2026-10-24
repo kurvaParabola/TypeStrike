@@ -19,7 +19,7 @@ import {
 import { sound } from '../services/sound';
 import type { Player } from '../types';
 import { p2p } from '../services/p2p';
-import { createRoomOnchain, joinRoomOnchain } from '../services/contract';
+import { createRoomOnchain, joinRoomOnchain, getRoomOnchain } from '../services/contract';
 import { getNextCombatWord } from '../services/matchEngine';
 
 interface RoomLobbyProps {
@@ -123,10 +123,15 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
 
     setIsHosting(true);
 
+    const hostPlayerWithWallet = {
+      ...player,
+      walletAddress: walletAddress || undefined,
+    };
+
     // Initialize Host P2P listener
     p2p.initHost(
       generatedCode,
-      player,
+      hostPlayerWithWallet,
       (guest) => {
         sound.playHeal();
         setJoinedGuest(guest);
@@ -137,7 +142,9 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
       (errMsg) => {
         setHostError(errMsg);
         setIsHosting(false);
-      }
+      },
+      wager,
+      depositOnchain
     );
   };
 
@@ -172,32 +179,51 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
     setJoinError(null);
     setIsJoining(true);
 
-    // Optional onchain wager deposit for guest
+    // Check if room exists on-chain and auto-match host's wager
     let txHash: string | undefined = undefined;
-    if (depositOnchain && walletAddress) {
+    let effectiveWager = wager;
+
+    if (walletAddress) {
       try {
-        setIsDepositing(true);
-        txHash = await joinRoomOnchain(cleanCode, wager, walletAddress);
-        setGuestTxHash(txHash);
-      } catch (err: any) {
-        console.error('Guest onchain deposit failed:', err);
-        setJoinError(
-          err.message?.includes('rejected')
-            ? 'Penyetoran tiket arena dibatalkan di wallet.'
-            : `Gagal setor tiket arena ke vault: ${err.message || 'Transaksi gagal'}`
-        );
-        setIsJoining(false);
-        setIsDepositing(false);
-        return;
-      } finally {
-        setIsDepositing(false);
+        const onchainRoom = await getRoomOnchain(cleanCode);
+        if (onchainRoom && onchainRoom.wagerMon && parseFloat(onchainRoom.wagerMon) > 0) {
+          effectiveWager = onchainRoom.wagerMon;
+          setWager(effectiveWager);
+        }
+      } catch {
+        // Proceed with default wager
+      }
+
+      if (depositOnchain) {
+        try {
+          setIsDepositing(true);
+          txHash = await joinRoomOnchain(cleanCode, effectiveWager, walletAddress);
+          setGuestTxHash(txHash);
+        } catch (err: any) {
+          console.error('Guest onchain deposit failed:', err);
+          setJoinError(
+            err.message?.includes('rejected')
+              ? 'Penyetoran tiket arena dibatalkan di wallet.'
+              : `Gagal setor tiket arena ke vault: ${err.message || 'Transaksi gagal'}`
+          );
+          setIsJoining(false);
+          setIsDepositing(false);
+          return;
+        } finally {
+          setIsDepositing(false);
+        }
       }
     }
+
+    const guestPlayerWithWallet = {
+      ...player,
+      walletAddress: walletAddress || undefined,
+    };
 
     // Connect to host via WebRTC DataChannel
     p2p.connectGuest(
       cleanCode,
-      player,
+      guestPlayerWithWallet,
       (host) => {
         sound.playHeal();
         setConnectedHost(host);
@@ -207,7 +233,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
         // When Host signals match start, Guest synchronously transitions to ARENA!
         if (msg.type === 'START_MATCH') {
           sound.playCountdown(true);
-          onStartMatch(p2p.opponent || connectedHost!, wager, cleanCode, true, txHash || guestTxHash || undefined);
+          onStartMatch(p2p.opponent || connectedHost!, effectiveWager, cleanCode, true, txHash || guestTxHash || undefined);
         }
       },
       (errMsg) => {

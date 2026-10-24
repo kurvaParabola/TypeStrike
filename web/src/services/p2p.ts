@@ -3,9 +3,11 @@ import type { Player, CombatWord } from '../types';
 
 export type P2PMessage =
   | { type: 'GUEST_JOINED'; player: Player }
-  | { type: 'HOST_ACCEPT'; player: Player }
+  | { type: 'HOST_ACCEPT'; player: Player; wager?: string; depositOnchain?: boolean }
   | { type: 'START_MATCH'; initialWord: CombatWord }
   | { type: 'ATTACK'; damage: number; char: string; buffType?: string; isCrit?: boolean; isFinisher?: boolean }
+  | { type: 'HP_SYNC'; hp: number; shieldActive: boolean }
+  | { type: 'MATCH_FINISHED'; winnerId: string; winnerAddress?: string; loserId: string; highestCrit?: number }
   | { type: 'REMATCH_OFFER' }
   | { type: 'REMATCH_ACCEPT' };
 
@@ -34,7 +36,9 @@ export class P2PService {
     hostPlayer: Player,
     onGuestConnected: (guest: Player) => void,
     onMessage: (msg: P2PMessage) => void,
-    onError: (err: string) => void
+    onError: (err: string) => void,
+    wager?: string,
+    depositOnchain?: boolean
   ) {
     this.cleanup();
     this.isHost = true;
@@ -54,7 +58,7 @@ export class P2PService {
       this.peer.on('connection', (connection) => {
         console.log('[P2P Host] Incoming guest connection!');
         this.conn = connection;
-        this.setupConnection(hostPlayer, onGuestConnected);
+        this.setupConnection(hostPlayer, onGuestConnected, wager, depositOnchain);
       });
 
       this.peer.on('error', (err: any) => {
@@ -149,7 +153,9 @@ export class P2PService {
    */
   private setupConnection(
     hostPlayer: Player,
-    onGuestConnected: (guest: Player) => void
+    onGuestConnected: (guest: Player) => void,
+    wager?: string,
+    depositOnchain?: boolean
   ) {
     if (!this.conn) return;
 
@@ -162,10 +168,12 @@ export class P2PService {
       const msg = data as P2PMessage;
       if (msg.type === 'GUEST_JOINED') {
         this.opponent = msg.player;
-        // Reply with host player details
+        // Reply with host player details and wager info
         this.send({
           type: 'HOST_ACCEPT',
           player: hostPlayer,
+          wager,
+          depositOnchain,
         });
         onGuestConnected(msg.player);
       } else if (this.onMessageCallback) {

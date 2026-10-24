@@ -157,3 +157,102 @@ export async function getRoomOnchain(roomCode: string): Promise<{
     return null;
   }
 }
+
+/**
+ * Authoritative on-chain settlement:
+ * Calls settleMatch(bytes32 roomId, address winner) on BlockTypeDuelEscrow.
+ * Disburses 100% of the escrow prize pool (2x wager) to the winner's wallet address.
+ */
+export async function settleMatchOnchain(
+  roomCode: string,
+  winnerAddress: string
+): Promise<string> {
+  const cleanWinner = winnerAddress.trim().toLowerCase();
+  if (!cleanWinner.startsWith('0x') || cleanWinner.length !== 42) {
+    throw new Error('Alamat wallet pemenang tidak valid.');
+  }
+
+  // 1. Try Vercel Serverless API first if running on production
+  try {
+    const res = await fetch('/api/settle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomCode, winnerAddress: cleanWinner }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.txHash) {
+        console.log('[Onchain Settle] Settled via API route! Tx:', json.txHash);
+        return json.txHash;
+      }
+    }
+  } catch (e) {
+    console.log('[Onchain Settle] /api/settle route bypassed, using direct Monad relayer...');
+  }
+
+  // 2. Direct Monad Testnet settlement via viem client
+  const { createWalletClient, createPublicClient, http } = await import('viem');
+  const { privateKeyToAccount } = await import('viem/accounts');
+
+  const monadTestnet = {
+    id: 10143,
+    name: 'Monad Testnet',
+    network: 'monad-testnet',
+    nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
+    rpcUrls: {
+      default: { http: ['https://testnet-rpc.monad.xyz'] },
+    },
+  };
+
+  // Authoritative server signer key for BlockTypeDuelEscrow
+  const SERVER_KEY = (
+    import.meta.env.VITE_SERVER_PRIVATE_KEY ||
+    '0xd4a23208db05548e6d99d3eb822d1f3cc5d23e1ca9a9bce151f550ae9abbf97b'
+  ) as `0x${string}`;
+
+  const serverAccount = privateKeyToAccount(SERVER_KEY);
+  const walletClient = createWalletClient({
+    account: serverAccount,
+    chain: monadTestnet,
+    transport: http('https://testnet-rpc.monad.xyz'),
+  });
+
+  const publicClient = createPublicClient({
+    chain: monadTestnet,
+    transport: http('https://testnet-rpc.monad.xyz'),
+  });
+
+  const roomIdBytes32 = roomCodeToBytes32(roomCode) as `0x${string}`;
+
+  console.log(`[Onchain Settle] Broadcasting settleMatch for Room ${roomCode} -> Winner ${cleanWinner}...`);
+
+  const txHash = await walletClient.writeContract({
+    address: ESCROW_CONTRACT_ADDRESS as `0x${string}`,
+    abi: [
+      {
+        type: 'function',
+        name: 'settleMatch',
+        inputs: [
+          { name: 'roomId', type: 'bytes32' },
+          { name: 'winner', type: 'address' },
+        ],
+        outputs: [],
+        stateMutability: 'nonpayable',
+      },
+    ],
+    functionName: 'settleMatch',
+    args: [roomIdBytes32, cleanWinner as `0x${string}`],
+  });
+
+  console.log('[Onchain Settle] Settlement Tx sent:', txHash);
+
+  // Wait for receipt asynchronously so Monad state confirms
+  try {
+    await publicClient.waitForTransactionReceipt({ hash: txHash });
+    console.log('[Onchain Settle] Settlement confirmed on Monad Testnet!');
+  } catch (err) {
+    console.warn('[Onchain Settle] Receipt wait timed out, tx broadcasted:', txHash);
+  }
+
+  return txHash;
+}

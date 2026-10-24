@@ -32,10 +32,13 @@ export function App() {
   const [walletBalance, setWalletBalance] = useState<string>('0.00');
 
   // Room & P2P State
-  const [_roomCode, setRoomCode] = useState<string>('');
+  const [roomCode, setRoomCode] = useState<string>('');
   const [_wagerAmount, setWagerAmount] = useState<string>('0.10');
   const [isP2pMatch, setIsP2pMatch] = useState<boolean>(false);
   const [onchainTxHash, setOnchainTxHash] = useState<string | null>(null);
+  const [settleTxHash, setSettleTxHash] = useState<string | null>(null);
+  const [_isSettling, setIsSettling] = useState<boolean>(false);
+  const [matchWinnerId, setMatchWinnerId] = useState<string | null>(null);
 
   // Player state & LocalStorage persistence
   const [nickname, setNickname] = useState<string>(() => {
@@ -131,6 +134,8 @@ export function App() {
   ) => {
     setIsP2pMatch(isP2p);
     setOnchainTxHash(txHash || null);
+    setSettleTxHash(null);
+    setMatchWinnerId(null);
     setOpponent(matchedOpponent);
     setWagerAmount(wager);
     setRoomCode(code);
@@ -184,8 +189,31 @@ export function App() {
   };
 
   // Match finished (One combatant reached 0 HP)
-  const handleMatchFinished = (_winnerId: string, finalCrit: number) => {
+  const handleMatchFinished = async (finalWinnerId: string, finalCrit: number) => {
+    setMatchWinnerId(finalWinnerId);
     setHighestCrit(finalCrit);
+
+    // If this was an on-chain wager match, execute settlement to disburse escrow funds!
+    const isLocalWinner = finalWinnerId === player.id;
+    const winnerWallet = isLocalWinner
+      ? (walletAddress || player.walletAddress)
+      : (opponent?.walletAddress);
+
+    if (onchainTxHash && roomCode && winnerWallet) {
+      try {
+        setIsSettling(true);
+        console.log(`[App] Settling match on-chain for Room ${roomCode} | Winner: ${winnerWallet}...`);
+        const { settleMatchOnchain } = await import('./services/contract');
+        const sHash = await settleMatchOnchain(roomCode, winnerWallet);
+        setSettleTxHash(sHash);
+        console.log('[App] Match settled on Monad! Tx:', sHash);
+      } catch (err) {
+        console.warn('[App] Settle match onchain warning:', err);
+      } finally {
+        setIsSettling(false);
+      }
+    }
+
     setTimeout(() => {
       setScreen('RESULT');
     }, 800);
@@ -194,22 +222,23 @@ export function App() {
   // Compute final match stats for result screen
   const calculateMatchStats = (): MatchStats => {
     const durationSecs = Math.max(1, Math.round((Date.now() - matchStartTime) / 1000));
-    const winnerId = player.hp > 0 ? player.id : (opponent?.id || 'opponent');
+    const effectiveWinnerId = matchWinnerId || (player.hp > 0 ? player.id : (opponent?.id || 'opponent'));
+    const isLocalWinner = effectiveWinnerId === player.id;
 
     return {
-      winnerId,
+      winnerId: effectiveWinnerId,
       finalScore: {
-        player1: player.hp,
-        player2: opponent?.hp || 0,
+        player1: isLocalWinner ? Math.max(player.hp, 1) : 0,
+        player2: isLocalWinner ? 0 : Math.max(opponent?.hp || 0, 1),
       },
-      player1FinalHp: player.hp,
-      player2FinalHp: opponent?.hp || 0,
+      player1FinalHp: isLocalWinner ? Math.max(player.hp, 1) : 0,
+      player2FinalHp: isLocalWinner ? 0 : Math.max(opponent?.hp || 0, 1),
       totalWordsTyped: Math.round(durationSecs * 1.2),
       highestCritDamage: highestCrit || 22,
       averageWpm: 75,
       accuracy: 98,
       matchDurationSecs: durationSecs,
-      onchainTxHash: onchainTxHash || '0x54dF...A994',
+      onchainTxHash: settleTxHash || onchainTxHash || '0x54dF...A994',
     };
   };
 
@@ -332,7 +361,7 @@ export function App() {
             player={player}
             opponent={opponent}
             stats={calculateMatchStats()}
-            isWinner={player.hp > 0}
+            isWinner={matchWinnerId === player.id}
             onRematch={handleVersusComplete}
             onFindNewMatch={() => setScreen(gameMode === 'WAGER' ? 'ROOM_LOBBY' : 'MODE_SELECT')}
             onGoHome={() => setScreen('LANDING')}

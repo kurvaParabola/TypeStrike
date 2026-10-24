@@ -217,6 +217,20 @@ export const Arena: React.FC<ArenaProps> = ({
     if (!isP2p) return;
 
     p2p.onMessage((msg: any) => {
+      // Authoritative MATCH_FINISHED broadcast from peer
+      if (msg.type === 'MATCH_FINISHED') {
+        if (isMatchOver.current) return;
+        isMatchOver.current = true;
+        onMatchFinished(msg.winnerId, msg.highestCrit || highestCrit);
+        return;
+      }
+
+      // Opponent HP state synchronization
+      if (msg.type === 'HP_SYNC') {
+        onUpdateOpponentHp(msg.hp, msg.shieldActive);
+        return;
+      }
+
       if (isMatchOver.current) return;
 
       if (msg.type === 'ATTACK') {
@@ -229,7 +243,7 @@ export const Arena: React.FC<ArenaProps> = ({
         if (player.role === 'ROGUE' && Math.random() < 0.15) {
           sound.playShield();
           spawnFloatingText('DODGE!', 'shield', 'player');
-          p2p.send({ type: 'REMATCH_OFFER' }); // signal dodge
+          p2p.send({ type: 'HP_SYNC', hp: player.hp, shieldActive: player.shieldActive });
           return;
         }
 
@@ -238,6 +252,7 @@ export const Arena: React.FC<ArenaProps> = ({
           sound.playShield();
           onUpdatePlayerHp(player.hp, false);
           spawnFloatingText('BLOCKED!', 'shield', 'player');
+          p2p.send({ type: 'HP_SYNC', hp: player.hp, shieldActive: false });
           return;
         }
 
@@ -255,19 +270,29 @@ export const Arena: React.FC<ArenaProps> = ({
         spawnFloatingText(`-${damage}`, isCrit ? 'crit' : 'damage', 'player');
         onUpdatePlayerHp(newPlayerHp, false);
 
+        // Sync new HP to opponent
+        p2p.send({ type: 'HP_SYNC', hp: newPlayerHp, shieldActive: false });
+
         setTimeout(() => {
           setOpponentAttacking(false);
           setPlayerHit(false);
         }, 350);
 
-        // If local player died, finish match (opponent wins)
+        // If local player died, finish match (opponent definitively wins!)
         if (newPlayerHp <= 0) {
           isMatchOver.current = true;
+          p2p.send({
+            type: 'MATCH_FINISHED',
+            winnerId: opponent.id,
+            winnerAddress: opponent.walletAddress,
+            loserId: player.id,
+            highestCrit,
+          });
           onMatchFinished(opponent.id, highestCrit);
         }
       }
     });
-  }, [isP2p, player.hp, player.shieldActive, player.role, opponent.id, opponent.role, screenShake, highestCrit, onUpdatePlayerHp, onMatchFinished]);
+  }, [isP2p, player.id, player.hp, player.shieldActive, player.role, player.walletAddress, opponent.id, opponent.role, opponent.walletAddress, screenShake, highestCrit, onUpdatePlayerHp, onUpdateOpponentHp, onMatchFinished]);
 
   // 5. Handle typing input (case-insensitive, fast feedback, flying letters)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,6 +365,9 @@ export const Arena: React.FC<ArenaProps> = ({
     }
 
     onUpdatePlayerHp(newPlayerHp, newShieldActive);
+    if (isP2p) {
+      p2p.send({ type: 'HP_SYNC', hp: newPlayerHp, shieldActive: newShieldActive });
+    }
 
     // Deal damage to opponent
     let newOpponentHp = opponent.hp;
@@ -391,6 +419,15 @@ export const Arena: React.FC<ArenaProps> = ({
     // Check if opponent defeated!
     if (newOpponentHp <= 0) {
       isMatchOver.current = true;
+      if (isP2p) {
+        p2p.send({
+          type: 'MATCH_FINISHED',
+          winnerId: player.id,
+          winnerAddress: player.walletAddress,
+          loserId: opponent.id,
+          highestCrit: Math.max(highestCrit, damage),
+        });
+      }
       onMatchFinished(player.id, Math.max(highestCrit, damage));
       return;
     }

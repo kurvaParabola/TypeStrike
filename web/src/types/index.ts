@@ -55,6 +55,7 @@ export interface Player {
   accuracy: number;
   progressPercent: number;
   isBot?: boolean;
+  walletAddress?: string;
 }
 
 export type GameMode = 'PRACTICE' | 'WAGER';
