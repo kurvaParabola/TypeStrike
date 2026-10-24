@@ -1,8 +1,9 @@
 import React from 'react';
-import type { AvatarConfig, AvatarAnimation } from '../types';
+import type { AvatarConfig, AvatarAnimation, PlayerRole } from '../types';
 
 interface AvatarProps {
   config: AvatarConfig;
+  role?: PlayerRole;
   animation?: AvatarAnimation;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   facing?: 'right' | 'left';
@@ -13,6 +14,7 @@ interface AvatarProps {
 
 export const Avatar: React.FC<AvatarProps> = ({
   config,
+  role = 'FIGHTER',
   animation = 'idle',
   size = 'md',
   facing = 'right',
@@ -245,19 +247,56 @@ export const Avatar: React.FC<AvatarProps> = ({
           <rect x="58" y="44" width="10" height="26" rx="2" fill={config.shirtColor} stroke="#2B3440" strokeWidth="2.5" />
           <rect x="58" y="62" width="10" height="8" rx="1" fill={config.skinTone} stroke="#2B3440" strokeWidth="2" />
 
-          {/* Weapon / Sword in Hand */}
-          <g transform="translate(62, 42) rotate(25)">
-            {/* Sword blade */}
-            <rect x="0" y="-30" width="6" height="30" fill="#E2E8F0" stroke="#2B3440" strokeWidth="2" rx="1" />
-            {/* Blade Tip */}
-            <polygon points="-1,-30 3,-36 7,-30" fill="#CBD5E1" stroke="#2B3440" strokeWidth="1.5" />
-            {/* Crossguard */}
-            <rect x="-5" y="0" width="16" height="4" fill="#F6C945" stroke="#2B3440" strokeWidth="2" rx="1" />
-            {/* Hilt */}
-            <rect x="1" y="4" width="4" height="8" fill="#8D5524" stroke="#2B3440" strokeWidth="1.5" />
-            {/* Pommel */}
-            <circle cx="3" cy="13" r="2.5" fill="#F6C945" stroke="#2B3440" strokeWidth="1.5" />
-          </g>
+          {/* Role-Specific Weapons in Hand */}
+          {role === 'WIZARD' ? (
+            /* WIZARD: Arcane Magic Staff with Glowing Gem */
+            <g transform="translate(62, 38) rotate(15)">
+              {/* Wooden Staff Shaft */}
+              <rect x="1" y="-24" width="4" height="46" fill="#78350F" stroke="#2B3440" strokeWidth="1.5" rx="1" />
+              {/* Golden Prongs */}
+              <polygon points="-2,-24 2,-32 6,-32 10,-24 4,-20" fill="#F59E0B" stroke="#2B3440" strokeWidth="1.5" />
+              {/* Glowing Purple Magical Crystal Orb */}
+              <circle cx="4" cy="-32" r="7.5" fill="#A855F7" stroke="#2B3440" strokeWidth="2" />
+              <circle cx="2.5" cy="-34.5" r="3" fill="#E9D5FF" />
+              {/* Arcane Magic Sparks */}
+              <circle cx="-3" cy="-34" r="1.5" fill="#38BDF8" className="animate-ping" />
+              <circle cx="11" cy="-30" r="1.5" fill="#F472B6" />
+            </g>
+          ) : role === 'ROGUE' ? (
+            /* ROGUE: Dual Shadow Kunai / Daggers */
+            <g transform="translate(60, 44) rotate(35)">
+              {/* Main Hand Kunai Blade */}
+              <polygon points="2,-24 -3,-8 7,-8" fill="#334155" stroke="#2B3440" strokeWidth="1.5" />
+              <line x1="2" y1="-24" x2="2" y2="-8" stroke="#94A3B8" strokeWidth="1" />
+              {/* Handle / Red Wrap */}
+              <rect x="0" y="-8" width="4" height="10" fill="#EF4444" stroke="#2B3440" strokeWidth="1.2" />
+              {/* Pommel Ring */}
+              <circle cx="2" cy="5" r="3.5" fill="none" stroke="#64748B" strokeWidth="2" />
+
+              {/* Second Kunai (Crossed Behind) */}
+              <g transform="translate(-10, 4) rotate(-65)">
+                <polygon points="2,-20 -2,-6 6,-6" fill="#1E293B" stroke="#2B3440" strokeWidth="1.5" />
+                <rect x="0" y="-6" width="4" height="8" fill="#EF4444" stroke="#2B3440" strokeWidth="1.2" />
+                <circle cx="2" cy="4" r="3" fill="none" stroke="#64748B" strokeWidth="2" />
+              </g>
+            </g>
+          ) : (
+            /* FIGHTER: Heavy Knight Broadsword */
+            <g transform="translate(62, 42) rotate(25)">
+              {/* Sword blade */}
+              <rect x="0" y="-32" width="7" height="32" fill="#E2E8F0" stroke="#2B3440" strokeWidth="2" rx="1" />
+              {/* Blade Fuller / Center Line */}
+              <line x1="3.5" y1="-28" x2="3.5" y2="-2" stroke="#94A3B8" strokeWidth="1.5" />
+              {/* Blade Tip */}
+              <polygon points="-1,-32 3.5,-38 8,-32" fill="#CBD5E1" stroke="#2B3440" strokeWidth="1.5" />
+              {/* Golden Crossguard */}
+              <rect x="-6" y="0" width="19" height="5" fill="#F59E0B" stroke="#2B3440" strokeWidth="2" rx="1" />
+              {/* Leather Hilt */}
+              <rect x="1.5" y="5" width="4" height="9" fill="#78350F" stroke="#2B3440" strokeWidth="1.5" />
+              {/* Golden Pommel */}
+              <circle cx="3.5" cy="16" r="3" fill="#F59E0B" stroke="#2B3440" strokeWidth="1.5" />
+            </g>
+          )}
         </svg>
       </div>
     </div>

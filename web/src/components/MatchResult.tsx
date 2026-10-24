@@ -59,16 +59,58 @@ export const MatchResult: React.FC<MatchResultProps> = ({
     return () => clearInterval(timer);
   }, [rematchRequested, onGoHome]);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     sound.playClick();
     const deployLink = typeof window !== 'undefined' ? window.location.origin : 'https://typestrike.vercel.app';
     const shareText = `BlockType Duel di Monad!\n${
       isWinner ? 'K.O. VICTORY!' : 'Kalah duel!'
     }\nSisa HP: ${stats.player1FinalHp} HP vs ${stats.player2FinalHp} HP\nSerangan Crit Tertinggi: ${stats.highestCritDamage} DMG\nMainkan sekarang: ${deployLink}`;
 
-    navigator.clipboard.writeText(shareText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    // Try native mobile share first
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'BlockType Duel - 1v1 PvP Typing Arena di Monad',
+          text: shareText,
+          url: deployLink,
+        });
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+        return;
+      } catch {
+        // User cancelled or share failed, fallback to clipboard
+      }
+    }
+
+    // Clipboard copy with fallback
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareText).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }).catch(() => {
+        fallbackCopyText(shareText);
+      });
+    } else {
+      fallbackCopyText(shareText);
+    }
+  };
+
+  const fallbackCopyText = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Ignored
+    }
+    document.body.removeChild(textArea);
   };
 
   return (
@@ -108,13 +150,14 @@ export const MatchResult: React.FC<MatchResultProps> = ({
         <div className="flex flex-col items-center">
           <Avatar
             config={player.avatar}
+            role={player.role}
             animation={isWinner ? 'win' : 'lose'}
             size="lg"
             facing="right"
             showBadge="KAMU"
           />
           <span className="font-pixel text-sm font-bold text-blockText mt-3">
-            {player.nickname}
+            {player.nickname} <span className="text-[10px] text-gray-500 font-pixel">[{player.role}]</span>
           </span>
           <span className={`font-mono text-sm font-black mt-1 flex items-center gap-1 ${
             stats.player1FinalHp > 0 ? 'text-blockGrass' : 'text-gray-400'
@@ -132,13 +175,14 @@ export const MatchResult: React.FC<MatchResultProps> = ({
         <div className="flex flex-col items-center">
           <Avatar
             config={opponent.avatar}
+            role={opponent.role}
             animation={isWinner ? 'lose' : 'win'}
             size="lg"
             facing="left"
             showBadge="LAWAN"
           />
           <span className="font-pixel text-sm font-bold text-blockText mt-3">
-            {opponent.nickname}
+            {opponent.nickname} <span className="text-[10px] text-gray-500 font-pixel">[{opponent.role}]</span>
           </span>
           <span className={`font-mono text-sm font-black mt-1 flex items-center gap-1 ${
             stats.player2FinalHp > 0 ? 'text-blockCoral' : 'text-gray-400'

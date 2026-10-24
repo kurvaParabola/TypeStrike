@@ -37,6 +37,8 @@ export interface RoleDefinition {
   tagline: string;
   passiveName: string;
   passiveDesc: string;
+  weaponName: string;
+  weaponDesc: string;
   baseHp: number;
 }
 

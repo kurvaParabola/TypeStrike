@@ -281,6 +281,23 @@ class SoundService {
       osc.stop(now + 0.25);
     });
   }
+
+  public unlockAudio() {
+    this.initCtx();
+  }
 }
 
 export const sound = new SoundService();
+
+// Browser AudioContext Autoplay Policy Unlocker
+if (typeof window !== 'undefined') {
+  const handleFirstInteraction = () => {
+    sound.unlockAudio();
+    window.removeEventListener('click', handleFirstInteraction);
+    window.removeEventListener('keydown', handleFirstInteraction);
+    window.removeEventListener('touchstart', handleFirstInteraction);
+  };
+  window.addEventListener('click', handleFirstInteraction, { passive: true });
+  window.addEventListener('keydown', handleFirstInteraction, { passive: true });
+  window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
+}

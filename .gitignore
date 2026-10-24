@@ -24,3 +24,7 @@ Thumbs.db
 *.swo
 .vscode/
 .idea/
+
+# Vercel & build
+.vercel
+web/dist

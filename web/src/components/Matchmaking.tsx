@@ -134,7 +134,7 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
         {/* Player 1 (Left) */}
         <div className="flex flex-col items-center">
           <div className="transform hover:scale-105 transition-transform">
-            <Avatar config={player.avatar} animation="idle" size="lg" facing="right" showBadge="KAMU" />
+            <Avatar config={player.avatar} role={player.role} animation="idle" size="lg" facing="right" showBadge="KAMU" />
           </div>
           <div className="mt-4 px-4 py-1.5 bg-white border-[3px] border-blockText rounded shadow-block text-center">
             <span className="font-pixel text-sm font-bold text-blockText block">
@@ -160,7 +160,7 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
         {opponent && (
           <div className="flex flex-col items-center">
             <div className="transform hover:scale-105 transition-transform">
-              <Avatar config={opponent.avatar} animation="idle" size="lg" facing="left" showBadge="LAWAN" />
+              <Avatar config={opponent.avatar} role={opponent.role} animation="idle" size="lg" facing="left" showBadge="LAWAN" />
             </div>
             <div className="mt-4 px-4 py-1.5 bg-white border-[3px] border-blockText rounded shadow-block text-center">
               <span className="font-pixel text-sm font-bold text-blockText block">

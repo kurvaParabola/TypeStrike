@@ -152,7 +152,7 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
 
         {/* Live Preview Display */}
         <div className="my-6 py-4 flex flex-col items-center justify-center">
-          <Avatar config={avatar} animation="idle" size="lg" showBadge="KAMU" />
+          <Avatar config={avatar} role={role} animation="idle" size="lg" showBadge="KAMU" />
           <div className="mt-4 px-4 py-1.5 bg-white border-2 border-blockText rounded shadow-block-sm text-center">
             <span className="font-pixel text-sm font-bold text-blockText block">
               {nickname.trim() || 'Tamu_Blok'}
@@ -236,19 +236,30 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
                     <div className="font-pixel text-[11px] font-bold text-blockText truncate">
                       {r.id}
                     </div>
-                    <div className="text-[10px] font-sans text-gray-500 leading-tight mt-0.5 line-clamp-1">
-                      {r.passiveName}
+                    <div className="text-[9px] font-sans text-gray-700 font-semibold leading-tight mt-0.5 truncate">
+                      {r.weaponName}
                     </div>
                   </button>
                 );
               })}
             </div>
-            {/* Active role passive explanation */}
-            <div className="mt-2 p-2 bg-blockCream border border-blockText rounded-xs text-[11px] font-sans text-gray-700 flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-blockSun shrink-0" />
-              <span>
-                <strong>{selectedRoleDef.passiveName}:</strong> {selectedRoleDef.passiveDesc}
-              </span>
+            {/* Active role weapon & passive explanation */}
+            <div className="mt-2.5 p-2.5 bg-blockCream border-2 border-blockText rounded-sm text-xs font-sans text-gray-800 space-y-1.5 shadow-block-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-pixel text-[10px] font-bold text-blockText px-1.5 py-0.5 bg-white border border-blockText rounded-xs shrink-0">
+                  SENJATA
+                </span>
+                <span className="font-bold text-blockText">{selectedRoleDef.weaponName}</span>
+                <span className="text-gray-500 text-[11px] hidden sm:inline">— {selectedRoleDef.weaponDesc}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-gray-700">
+                <span className="font-pixel text-[10px] font-bold text-blockText px-1.5 py-0.5 bg-white border border-blockText rounded-xs shrink-0 flex items-center gap-1">
+                  <Zap className="w-2.5 h-2.5 text-blockSun" /> PASIF
+                </span>
+                <span>
+                  <strong>{selectedRoleDef.passiveName}:</strong> {selectedRoleDef.passiveDesc}
+                </span>
+              </div>
             </div>
           </div>
 

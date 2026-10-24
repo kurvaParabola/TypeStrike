@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Player, CombatWord, FloatingText } from '../types';
+import type { Player, CombatWord, FloatingText, PlayerRole } from '../types';
 import { Avatar } from './Avatar';
 import { sound } from '../services/sound';
 import { getNextCombatWord, calculateSpeedDamage } from '../services/matchEngine';
-import { Shield, Flame, Zap, Heart } from 'lucide-react';
+import { Shield, Flame, Zap, Heart, Swords, Wand2, Crosshair } from 'lucide-react';
 
 interface ArenaProps {
   player: Player;
@@ -37,6 +37,7 @@ export const Arena: React.FC<ArenaProps> = ({
     id: string;
     char: string;
     from: 'player' | 'opponent';
+    role: PlayerRole;
     buffType?: string;
     isFinisher?: boolean;
   }[]>([]);
@@ -125,10 +126,12 @@ export const Arena: React.FC<ArenaProps> = ({
     char: string,
     from: 'player' | 'opponent',
     buffType?: string,
-    isFinisher?: boolean
+    isFinisher?: boolean,
+    customRole?: PlayerRole
   ) => {
     const id = `proj_${Date.now()}_${Math.random()}`;
-    setProjectiles((prev) => [...prev, { id, char, from, buffType, isFinisher }]);
+    const role = customRole || (from === 'player' ? player.role : opponent.role);
+    setProjectiles((prev) => [...prev, { id, char, from, role, buffType, isFinisher }]);
 
     // Flight duration is 380ms -> trigger impact burst when hitting avatar
     setTimeout(() => {
@@ -154,10 +157,10 @@ export const Arena: React.FC<ArenaProps> = ({
     const botAttackInterval = setInterval(() => {
       if (isMatchOver.current) return;
 
-      // Spawn bot attack projectile towards player
+      // Spawn bot attack projectile towards player with opponent's weapon/role
       const botAttackWords = ['TEBAS', 'KILAT', 'TUSUK', 'SERANG', 'HANTAM'];
       const botWord = botAttackWords[Math.floor(Math.random() * botAttackWords.length)];
-      spawnProjectile(botWord, 'opponent');
+      spawnProjectile(botWord, 'opponent', undefined, false, opponent.role);
 
       // Bot attacks player
       const botDamage = 10 + Math.floor(Math.random() * 8);
@@ -227,11 +230,11 @@ export const Arena: React.FC<ArenaProps> = ({
 
     sound.playKeypress();
 
-    // If new letter was typed, launch flying letter projectile!
+    // If new letter was typed, launch flying letter projectile with role weapon style!
     if (rawValue.length > userInput.length) {
       const charTyped = rawValue[rawValue.length - 1];
       const isFinisher = rawValue === target;
-      spawnProjectile(charTyped, 'player', currentWord.buffType, isFinisher);
+      spawnProjectile(charTyped, 'player', currentWord.buffType, isFinisher, player.role);
     }
 
     setUserInput(rawValue);
@@ -409,27 +412,49 @@ export const Arena: React.FC<ArenaProps> = ({
 
         {/* Duel Arena: Avatars, Letter Projectiles & Floating Damage Numbers */}
         <div className="flex items-center justify-between gap-4 relative py-4 min-h-[200px]">
-          {/* Flying Letter / Attack Projectiles */}
-          {projectiles.map((p) => (
-            <div
-              key={p.id}
-              className={`absolute z-30 pointer-events-none select-none font-pixel font-black text-sm md:text-base px-2.5 py-1 rounded border-2 border-blockText shadow-block-sm flex items-center justify-center ${
-                p.from === 'player' ? 'animate-letter-strike' : 'animate-bot-strike'
-              } ${
-                p.buffType === 'HEAL'
-                  ? 'bg-emerald-400 text-white'
-                  : p.buffType === 'DOUBLE_DMG'
-                  ? 'bg-rose-500 text-white animate-pulse'
-                  : p.buffType === 'SHIELD'
-                  ? 'bg-sky-400 text-white'
-                  : p.from === 'opponent'
-                  ? 'bg-rose-600 text-white'
-                  : 'bg-blockSun text-blockText'
-              } ${p.isFinisher ? 'ring-2 ring-yellow-300 scale-125' : ''}`}
-            >
-              {p.char}
-            </div>
-          ))}
+          {/* Flying Letter / Attack Projectiles with Role Weapon Styling */}
+          {projectiles.map((p) => {
+            const isWizard = p.role === 'WIZARD';
+            const isRogue = p.role === 'ROGUE';
+            const isFighter = p.role === 'FIGHTER';
+
+            let styleClass = '';
+            if (p.buffType === 'HEAL') {
+              styleClass = 'bg-emerald-500 text-white border-emerald-700 shadow-block-sm';
+            } else if (p.buffType === 'DOUBLE_DMG') {
+              styleClass = 'bg-rose-500 text-white border-rose-700 animate-pulse shadow-block-sm';
+            } else if (p.buffType === 'SHIELD') {
+              styleClass = 'bg-sky-400 text-white border-sky-600 shadow-block-sm';
+            } else if (p.from === 'opponent') {
+              styleClass = isWizard
+                ? 'bg-purple-600 text-white border-purple-900 shadow-block-sm'
+                : isRogue
+                ? 'bg-slate-800 text-emerald-400 border-slate-950 shadow-block-sm'
+                : 'bg-rose-600 text-white border-rose-900 shadow-block-sm';
+            } else {
+              // Player attacks with role weapon aura
+              styleClass = isWizard
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-900 shadow-[0_0_8px_rgba(168,85,247,0.6)]'
+                : isRogue
+                ? 'bg-gradient-to-r from-slate-900 to-emerald-950 text-emerald-300 border-slate-950 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-blockText border-amber-800 shadow-[0_0_8px_rgba(245,158,11,0.5)]';
+            }
+
+            return (
+              <div
+                key={p.id}
+                className={`absolute z-30 pointer-events-none select-none font-pixel font-black text-xs md:text-sm px-2.5 py-1 rounded border-2 flex items-center gap-1 ${
+                  p.from === 'player' ? 'animate-letter-strike' : 'animate-bot-strike'
+                } ${styleClass} ${p.isFinisher ? 'ring-2 ring-yellow-300 scale-125' : ''}`}
+              >
+                {/* Role Weapon Icon */}
+                {isWizard && <Wand2 className="w-3 h-3 text-purple-200 shrink-0" />}
+                {isRogue && <Crosshair className="w-3 h-3 text-emerald-300 shrink-0" />}
+                {isFighter && <Swords className="w-3 h-3 text-amber-950 shrink-0" />}
+                <span>{p.char}</span>
+              </div>
+            );
+          })}
 
           {/* Impact Bursts */}
           {impacts.map((imp) => (
@@ -466,6 +491,7 @@ export const Arena: React.FC<ArenaProps> = ({
 
             <Avatar
               config={player.avatar}
+              role={player.role}
               animation={player.hp <= 0 ? 'lose' : userInput.length > 0 ? 'typing' : 'idle'}
               size="lg"
               facing="right"
@@ -512,6 +538,7 @@ export const Arena: React.FC<ArenaProps> = ({
 
             <Avatar
               config={opponent.avatar}
+              role={opponent.role}
               animation={opponent.hp <= 0 ? 'lose' : 'idle'}
               size="lg"
               facing="left"
