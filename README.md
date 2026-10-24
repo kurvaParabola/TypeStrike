@@ -199,7 +199,11 @@ Jika ingin menguji transaksi on-chain secara lokal:
 ---
 
 ## 👥 Tim & Pengembang
-- **GitHub:** [@kurvaParabola](https://github.com/kurvaParabola)
+- **GitHub:**
+  [@kurvaParabola](https://github.com/kurvaParabola)
+  [@kkirayu](https://github.com/kkirayu)
+  [@linduaji](https://github.com/linduaji)
+  
 - **Project Repository:** [TypeStrike](https://github.com/kurvaParabola/TypeStrike)
 
 ---
