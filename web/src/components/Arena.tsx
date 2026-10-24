@@ -3,7 +3,7 @@ import type { Player, CombatWord, FloatingText } from '../types';
 import { Avatar } from './Avatar';
 import { sound } from '../services/sound';
 import { getNextCombatWord, calculateSpeedDamage } from '../services/matchEngine';
-import { Shield, Flame, Zap } from 'lucide-react';
+import { Shield, Flame, Zap, Heart } from 'lucide-react';
 
 interface ArenaProps {
   player: Player;
@@ -101,7 +101,7 @@ export const Arena: React.FC<ArenaProps> = ({
         // Player blocks attack with shield!
         sound.playShield();
         onUpdatePlayerHp(player.hp, false);
-        spawnFloatingText('🛡️ DITANGKIS!', 'shield', 'player');
+        spawnFloatingText('BLOCKED!', 'shield', 'player');
       } else {
         // Player takes damage
         const newPlayerHp = Math.max(0, player.hp - botDamage);
@@ -187,7 +187,7 @@ export const Arena: React.FC<ArenaProps> = ({
     } else if (currentWord.buffType === 'SHIELD') {
       sound.playShield();
       newShieldActive = true;
-      spawnFloatingText('🛡️ PERISAI AKTIF!', 'shield', 'player');
+      spawnFloatingText('PERISAI AKTIF!', 'shield', 'player');
     }
 
     onUpdatePlayerHp(newPlayerHp, newShieldActive);
@@ -198,7 +198,7 @@ export const Arena: React.FC<ArenaProps> = ({
       // Opponent shielded
       sound.playShield();
       onUpdateOpponentHp(opponent.hp, false);
-      spawnFloatingText('🛡️ DITANGKIS!', 'shield', 'opponent');
+      spawnFloatingText('BLOCKED!', 'shield', 'opponent');
     } else {
       // Direct damage
       newOpponentHp = Math.max(0, opponent.hp - damage);
@@ -281,8 +281,9 @@ export const Arena: React.FC<ArenaProps> = ({
                 style={{ width: `${player.hp}%` }}
               />
               {player.shieldActive && (
-                <div className="absolute inset-0 bg-sky-400/40 border border-sky-300 flex items-center justify-center font-pixel text-[9px] text-white">
-                  🛡️ SHIELD
+                <div className="absolute inset-0 bg-sky-500/60 border border-sky-300 flex items-center justify-center font-pixel text-[9px] text-white gap-1">
+                  <Shield className="w-2.5 h-2.5 fill-white" />
+                  <span>SHIELD</span>
                 </div>
               )}
             </div>
@@ -304,8 +305,9 @@ export const Arena: React.FC<ArenaProps> = ({
                 style={{ width: `${opponent.hp}%` }}
               />
               {opponent.shieldActive && (
-                <div className="absolute inset-0 bg-sky-400/40 border border-sky-300 flex items-center justify-center font-pixel text-[9px] text-white">
-                  🛡️ SHIELD
+                <div className="absolute inset-0 bg-sky-500/60 border border-sky-300 flex items-center justify-center font-pixel text-[9px] text-white gap-1">
+                  <Shield className="w-2.5 h-2.5 fill-white" />
+                  <span>SHIELD</span>
                 </div>
               )}
             </div>
@@ -346,8 +348,9 @@ export const Arena: React.FC<ArenaProps> = ({
 
             {/* Combo Streak */}
             {comboStreak > 1 && (
-              <span className="mt-2 font-pixel text-[11px] text-blockSun bg-blockText px-2 py-0.5 rounded shadow-block-sm animate-pulse">
-                COMBO x{comboStreak}! 🔥
+              <span className="mt-2 font-pixel text-[11px] text-blockSun bg-blockText px-2 py-0.5 rounded shadow-block-sm animate-pulse flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span>COMBO x{comboStreak}!</span>
               </span>
             )}
           </div>
@@ -411,7 +414,9 @@ export const Arena: React.FC<ArenaProps> = ({
         {/* Buff Tag Indicator */}
         {currentWord.buffType !== 'BASIC' && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 border-2 border-blockText rounded-full text-xs font-pixel font-bold text-blockText mb-3 shadow-block-sm animate-pulse">
-            <span>{currentWord.buffIcon}</span>
+            {currentWord.buffType === 'HEAL' && <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />}
+            {currentWord.buffType === 'DOUBLE_DMG' && <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
+            {currentWord.buffType === 'SHIELD' && <Shield className="w-3.5 h-3.5 text-sky-500 fill-sky-500" />}
             <span>KATA BUFF: {currentWord.buffLabel}</span>
           </div>
         )}

@@ -20,7 +20,6 @@ export interface CombatWord {
   word: string;
   buffType: WordBuffType;
   buffLabel?: string;
-  buffIcon?: string;
 }
 
 export interface FloatingText {
@@ -44,7 +43,23 @@ export interface Player {
   isBot?: boolean;
 }
 
-export type GameScreen = 'HOME' | 'QUEUE' | 'VERSUS' | 'ARENA' | 'RESULT';
+export type GameMode = 'PRACTICE' | 'WAGER';
+
+export type GameScreen =
+  | 'LANDING'
+  | 'MODE_SELECT'
+  | 'CUSTOMIZE'
+  | 'ROOM_LOBBY'
+  | 'QUEUE'
+  | 'VERSUS'
+  | 'ARENA'
+  | 'RESULT';
+
+export interface RoomDetails {
+  code: string;
+  isHost: boolean;
+  wagerMon: string;
+}
 
 export interface MatchStats {
   winnerId: string;

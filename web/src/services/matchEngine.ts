@@ -29,7 +29,6 @@ export function getNextCombatWord(currentHp: number, previousWord?: string): Com
         word,
         buffType: 'HEAL',
         buffLabel: '+25 HP RECOVER',
-        buffIcon: '❤️',
       };
     } else if (roll < 0.72) {
       // 2X DAMAGE / RAGE Buff
@@ -38,7 +37,6 @@ export function getNextCombatWord(currentHp: number, previousWord?: string): Com
         word,
         buffType: 'DOUBLE_DMG',
         buffLabel: '2X DAMAGE RAGE',
-        buffIcon: '🔥',
       };
     } else {
       // SHIELD Buff
@@ -47,7 +45,6 @@ export function getNextCombatWord(currentHp: number, previousWord?: string): Com
         word,
         buffType: 'SHIELD',
         buffLabel: 'PERISAI KEBAL',
-        buffIcon: '🛡️',
       };
     }
   }
@@ -81,12 +78,12 @@ export function calculateSpeedDamage(
     // Ultra fast (< 0.45s)
     baseDamage = 22;
     isCrit = true;
-    speedTier = '⚡ HYPER CRIT!';
+    speedTier = 'HYPER CRIT!';
   } else if (timeTakenMs <= 800) {
     // Fast (0.45s - 0.8s)
     baseDamage = 17;
     isCrit = true;
-    speedTier = '💥 CRIT!';
+    speedTier = 'CRIT!';
   } else if (timeTakenMs <= 1300) {
     // Solid (0.8s - 1.3s)
     baseDamage = 13;
@@ -101,7 +98,7 @@ export function calculateSpeedDamage(
   if (buffType === 'DOUBLE_DMG') {
     baseDamage *= 2;
     isCrit = true;
-    speedTier = '🔥 2X RAGE CRIT!';
+    speedTier = '2X RAGE CRIT!';
   }
 
   return { damage: baseDamage, isCrit, speedTier };

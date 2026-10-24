@@ -61,9 +61,9 @@ export const MatchResult: React.FC<MatchResultProps> = ({
 
   const handleShare = () => {
     sound.playClick();
-    const shareText = `⚔️ BlockType Duel di Monad!\n${
-      isWinner ? '🏆 K.O. VICTORY!' : '💀 Kalah duel!'
-    }\nSisa HP: ${stats.player1FinalHp} HP vs ${stats.player2FinalHp} HP\n⚡ Serangan Crit Tertinggi: ${stats.highestCritDamage} DMG\nMainkan sekarang: https://github.com/kurvaParabola/TypeStrike`;
+    const shareText = `BlockType Duel di Monad!\n${
+      isWinner ? 'K.O. VICTORY!' : 'Kalah duel!'
+    }\nSisa HP: ${stats.player1FinalHp} HP vs ${stats.player2FinalHp} HP\nSerangan Crit Tertinggi: ${stats.highestCritDamage} DMG\nMainkan sekarang: https://github.com/kurvaParabola/TypeStrike`;
 
     navigator.clipboard.writeText(shareText);
     setCopied(true);
@@ -174,8 +174,9 @@ export const MatchResult: React.FC<MatchResultProps> = ({
       {stats.onchainTxHash && (
         <div className="mb-6 p-3 bg-purple-50 border-2 border-blockPurple rounded-sm flex items-center justify-between text-left">
           <div>
-            <span className="font-pixel text-[11px] font-bold text-blockPurple block">
-              ⚡ ON-CHAIN SETTLEMENT MONAD
+            <span className="font-pixel text-[11px] font-bold text-blockPurple flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span>ON-CHAIN SETTLEMENT MONAD</span>
             </span>
             <span className="font-mono text-[11px] text-gray-600 truncate block max-w-md">
               Kontrak Escrow: 0x54dF...A994

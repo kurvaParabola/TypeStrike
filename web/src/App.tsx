@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { AvatarConfig, Player, GameScreen, MatchStats } from './types';
+import type { AvatarConfig, Player, GameScreen, GameMode, MatchStats } from './types';
 import { Header } from './components/Header';
+import { LandingPage } from './components/LandingPage';
+import { ModeSelect } from './components/ModeSelect';
 import { AvatarEditor } from './components/AvatarEditor';
+import { RoomLobby } from './components/RoomLobby';
 import { Matchmaking } from './components/Matchmaking';
 import { Arena } from './components/Arena';
 import { MatchResult } from './components/MatchResult';
@@ -20,7 +23,16 @@ const DEFAULT_AVATAR: AvatarConfig = {
 };
 
 export function App() {
-  const [screen, setScreen] = useState<GameScreen>('HOME');
+  const [screen, setScreen] = useState<GameScreen>('LANDING');
+  const [gameMode, setGameMode] = useState<GameMode>('PRACTICE');
+
+  // Wallet State
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<string>('0.00');
+
+  // Room State
+  const [_roomCode, setRoomCode] = useState<string>('');
+  const [_wagerAmount, setWagerAmount] = useState<string>('0.10');
 
   // Player state & LocalStorage persistence
   const [nickname, setNickname] = useState<string>(() => {
@@ -79,21 +91,18 @@ export function App() {
     }));
   }, [nickname, avatar]);
 
-  // Start matchmaking queue
-  const handleStartQueue = () => {
-    setScreen('QUEUE');
-
-    setTimeout(() => {
-      const matchedOpponent = createAiBot();
-      setOpponent(matchedOpponent);
-      setScreen('VERSUS');
-    }, 3500);
-  };
-
-  // Start with AI bot directly
+  // Start with AI bot directly (Practice Mode)
   const handlePlayWithBot = () => {
     const matchedOpponent = createAiBot();
     setOpponent(matchedOpponent);
+    setScreen('VERSUS');
+  };
+
+  // Start match from Room Lobby (Wager Mode)
+  const handleStartRoomMatch = (matchedOpponent: Player, wager: string, code: string) => {
+    setOpponent(matchedOpponent);
+    setWagerAmount(wager);
+    setRoomCode(code);
     setScreen('VERSUS');
   };
 
@@ -183,7 +192,8 @@ export function App() {
         onToggleReduceMotion={() => setReduceMotion((v) => !v)}
         screenShake={screenShake}
         onToggleScreenShake={() => setScreenShake((v) => !v)}
-        onGoHome={() => setScreen('HOME')}
+        walletAddress={walletAddress}
+        onGoHome={() => setScreen('LANDING')}
       />
 
       {/* Main Content Area */}
@@ -193,15 +203,39 @@ export function App() {
           <Monitor className="w-3.5 h-3.5" /> Main terbaik di desktop dengan keyboard fisik.
         </div>
 
-        {/* Screen 1: Home & Avatar Editor */}
-        {screen === 'HOME' && (
+        {/* Screen 1: Landing Page (Start + How to play) */}
+        {screen === 'LANDING' && (
+          <LandingPage onStart={() => setScreen('MODE_SELECT')} />
+        )}
+
+        {/* Screen 2: Mode Selection (Practice vs Wager / Wallet connect) */}
+        {screen === 'MODE_SELECT' && (
+          <ModeSelect
+            walletAddress={walletAddress}
+            walletBalance={walletBalance}
+            onWalletConnected={(addr, bal) => {
+              setWalletAddress(addr);
+              setWalletBalance(bal);
+            }}
+            onSelectMode={(mode) => {
+              setGameMode(mode);
+              setScreen('CUSTOMIZE');
+            }}
+            onBack={() => setScreen('LANDING')}
+          />
+        )}
+
+        {/* Screen 3: Avatar Customization */}
+        {screen === 'CUSTOMIZE' && (
           <div className="w-full">
             <div className="text-center mb-6">
               <h2 className="font-pixel text-xl md:text-3xl text-blockText font-black tracking-wide mb-2">
-                ARENA DUEL KATA RAPID 1v1
+                KUSTOMISASI KARAKTER DUEL
               </h2>
               <p className="text-xs md:text-sm font-sans text-gray-600 max-w-lg mx-auto">
-                Ketik kata per kata secepat kilat untuk melancarkan sabetan combo! Makin cepat ketik, makin besar damagenya!
+                {gameMode === 'PRACTICE'
+                  ? 'Atur tampilan avatarmu sebelum latihan melawan Bot AI.'
+                  : 'Siapkan karakter petarungmu sebelum memasuki Room Wager on-chain.'}
               </p>
             </div>
 
@@ -210,24 +244,43 @@ export function App() {
               onNicknameChange={setNickname}
               avatar={avatar}
               onAvatarChange={setAvatar}
-              onFindMatch={handleStartQueue}
+              gameMode={gameMode}
+              onProceed={() => {
+                if (gameMode === 'PRACTICE') {
+                  handlePlayWithBot();
+                } else {
+                  setScreen('ROOM_LOBBY');
+                }
+              }}
+              onBack={() => setScreen('MODE_SELECT')}
             />
           </div>
         )}
 
-        {/* Screen 2 & 3: Matchmaking Queue / Versus Screen */}
+        {/* Screen 4: Room Lobby (Host generate code / Guest input code) */}
+        {screen === 'ROOM_LOBBY' && (
+          <RoomLobby
+            player={player}
+            walletAddress={walletAddress}
+            walletBalance={walletBalance}
+            onStartMatch={handleStartRoomMatch}
+            onBack={() => setScreen('CUSTOMIZE')}
+          />
+        )}
+
+        {/* Screen 5: Matchmaking Queue / Versus Screen */}
         {(screen === 'QUEUE' || screen === 'VERSUS') && (
           <Matchmaking
             player={player}
             opponent={opponent}
             phase={screen}
-            onCancel={() => setScreen('HOME')}
+            onCancel={() => setScreen(gameMode === 'WAGER' ? 'ROOM_LOBBY' : 'CUSTOMIZE')}
             onPlayWithBot={handlePlayWithBot}
             onVersusComplete={handleVersusComplete}
           />
         )}
 
-        {/* Screen 4: Real-Time Word Combat Arena */}
+        {/* Screen 6: Real-Time Word Combat Arena */}
         {screen === 'ARENA' && opponent && (
           <Arena
             player={player}
@@ -239,7 +292,7 @@ export function App() {
           />
         )}
 
-        {/* Screen 5: Match Result */}
+        {/* Screen 7: Match Result */}
         {screen === 'RESULT' && opponent && (
           <MatchResult
             player={player}
@@ -247,8 +300,8 @@ export function App() {
             stats={calculateMatchStats()}
             isWinner={player.hp > 0}
             onRematch={handleVersusComplete}
-            onFindNewMatch={handleStartQueue}
-            onGoHome={() => setScreen('HOME')}
+            onFindNewMatch={() => setScreen(gameMode === 'WAGER' ? 'ROOM_LOBBY' : 'MODE_SELECT')}
+            onGoHome={() => setScreen('LANDING')}
           />
         )}
       </main>
@@ -268,4 +321,5 @@ export function App() {
     </div>
   );
 }
+
 export default App;

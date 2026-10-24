@@ -124,8 +124,10 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
   // Phase 2: Versus Screen (F-12: 2-3s facing each other)
   return (
     <div className="w-full max-w-3xl mx-auto card-block p-8 md:p-12 my-6 bg-gradient-to-b from-white via-blockCream to-blockBg text-center overflow-hidden relative">
-      <div className="font-pixel text-xs text-blockSky font-bold tracking-widest uppercase mb-4 animate-pulse">
-        ⚡ LAWAN DITEMUKAN! ⚡
+      <div className="font-pixel text-xs text-blockSky font-bold tracking-widest uppercase mb-4 animate-pulse flex items-center justify-center gap-2">
+        <Swords className="w-4 h-4" />
+        <span>LAWAN DITEMUKAN!</span>
+        <Swords className="w-4 h-4" />
       </div>
 
       <div className="flex flex-col md:flex-row items-center justify-around gap-6 my-6">
@@ -163,7 +165,14 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
                 {opponent.nickname}
               </span>
               <span className={`text-[10px] font-mono font-bold ${opponent.isBot ? 'text-amber-600' : 'text-blockSky'}`}>
-                {opponent.isBot ? '🤖 AI BOT' : 'READY'}
+                {opponent.isBot ? (
+                  <span className="flex items-center justify-center gap-1">
+                    <Bot className="w-3 h-3" />
+                    <span>AI BOT</span>
+                  </span>
+                ) : (
+                  'READY'
+                )}
               </span>
             </div>
           </div>

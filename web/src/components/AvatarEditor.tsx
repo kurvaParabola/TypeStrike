@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
-import type { AvatarConfig, HairStyle, FaceExpression, Accessory } from '../types';
+import type { AvatarConfig, HairStyle, FaceExpression, Accessory, GameMode } from '../types';
 import { Avatar } from './Avatar';
 import { sound } from '../services/sound';
-import { Sparkles, Dices, User } from 'lucide-react';
+import {
+  Sparkles,
+  Dices,
+  User,
+  Crown,
+  Glasses,
+  Headphones,
+  X as CloseIcon,
+  AlertTriangle,
+  Bot,
+  Users,
+  ArrowLeft,
+  ArrowRight,
+} from 'lucide-react';
 
 interface AvatarEditorProps {
   nickname: string;
   onNicknameChange: (name: string) => void;
   avatar: AvatarConfig;
   onAvatarChange: (config: AvatarConfig) => void;
-  onFindMatch: () => void;
+  gameMode?: GameMode;
+  onProceed: () => void;
+  onBack?: () => void;
 }
 
 export const SKIN_TONES = [
@@ -43,15 +58,15 @@ export const EXPRESSIONS: { id: FaceExpression; label: string }[] = [
   { id: 'hit', label: 'Kaget' },
 ];
 
-export const ACCESSORIES: { id: Accessory; label: string; icon: string }[] = [
-  { id: 'none', label: 'Polos', icon: '❌' },
-  { id: 'crown', label: 'Mahkota', icon: '👑' },
-  { id: 'glasses', label: 'Kacamata', icon: '🕶️' },
-  { id: 'headphones', label: 'Headphone', icon: '🎧' },
-  { id: 'headband', label: 'Headband', icon: '🎗️' },
+export const ACCESSORIES: { id: Accessory; label: string; iconType: string }[] = [
+  { id: 'none', label: 'Polos', iconType: 'none' },
+  { id: 'crown', label: 'Mahkota', iconType: 'crown' },
+  { id: 'glasses', label: 'Kacamata', iconType: 'glasses' },
+  { id: 'headphones', label: 'Headphone', iconType: 'headphones' },
+  { id: 'headband', label: 'Headband', iconType: 'headband' },
 ];
 
-// Simple profanity list for F-01
+// Simple profanity list
 const BANNED_WORDS = ['anjing', 'babi', 'bangsat', 'kontol', 'memek', 'asu', 'taek', 'fuck', 'shit'];
 
 export const AvatarEditor: React.FC<AvatarEditorProps> = ({
@@ -59,7 +74,9 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
   onNicknameChange,
   avatar,
   onAvatarChange,
-  onFindMatch,
+  gameMode = 'PRACTICE',
+  onProceed,
+  onBack,
 }) => {
   const [activeTab, setActiveTab] = useState<'skin' | 'hair' | 'face' | 'clothes' | 'acc'>('skin');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -159,8 +176,9 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
               </span>
             </div>
             {errorMsg && (
-              <p className="mt-1.5 text-xs font-sans font-bold text-blockCoral flex items-center gap-1">
-                ⚠️ {errorMsg}
+              <p className="mt-1.5 text-xs font-sans font-bold text-blockCoral flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>{errorMsg}</span>
               </p>
             )}
           </div>
@@ -330,44 +348,85 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
               <div>
                 <p className="text-xs text-gray-600 mb-2">Aksesoris Kepala:</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {ACCESSORIES.map((acc) => (
-                    <button
-                      key={acc.id}
-                      onClick={() => {
-                        sound.playClick();
-                        onAvatarChange({ ...avatar, accessory: acc.id });
-                      }}
-                      className={`py-2 px-2 text-xs font-sans font-bold border-2 border-blockText rounded flex items-center justify-center gap-1.5 ${
-                        avatar.accessory === acc.id ? 'bg-blockSun text-blockText' : 'bg-gray-100'
-                      }`}
-                    >
-                      <span>{acc.icon}</span>
-                      <span>{acc.label}</span>
-                    </button>
-                  ))}
+                  {ACCESSORIES.map((acc) => {
+                    const renderIcon = () => {
+                      switch (acc.iconType) {
+                        case 'crown':
+                          return <Crown className="w-4 h-4 text-amber-500" />;
+                        case 'glasses':
+                          return <Glasses className="w-4 h-4 text-sky-500" />;
+                        case 'headphones':
+                          return <Headphones className="w-4 h-4 text-indigo-500" />;
+                        case 'headband':
+                          return <Sparkles className="w-4 h-4 text-rose-500" />;
+                        default:
+                          return <CloseIcon className="w-4 h-4 text-gray-400" />;
+                      }
+                    };
+
+                    return (
+                      <button
+                        key={acc.id}
+                        onClick={() => {
+                          sound.playClick();
+                          onAvatarChange({ ...avatar, accessory: acc.id });
+                        }}
+                        className={`py-2 px-2 text-xs font-sans font-bold border-2 border-blockText rounded flex items-center justify-center gap-1.5 ${
+                          avatar.accessory === acc.id ? 'bg-blockSun text-blockText' : 'bg-gray-100'
+                        }`}
+                      >
+                        {renderIcon()}
+                        <span>{acc.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Action Button: "Cari Lawan" (F-04) */}
-        <div className="mt-6 pt-4 border-t-2 border-gray-200">
+        {/* Action Buttons: Back + Proceed */}
+        <div className="mt-6 pt-4 border-t-2 border-gray-200 flex items-center justify-between gap-3">
+          {onBack && (
+            <button
+              onClick={() => {
+                sound.playClick();
+                onBack();
+              }}
+              className="btn-block px-4 py-3 bg-white hover:bg-gray-50 text-blockText font-pixel text-xs flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>GANTI MODE</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               if (isFormValid) {
                 sound.playClick();
-                onFindMatch();
+                onProceed();
               }
             }}
             disabled={!isFormValid}
-            className={`w-full py-4 text-center text-sm md:text-base font-pixel tracking-wider transition-transform ${
+            className={`flex-1 py-3.5 px-4 text-center text-xs md:text-sm font-pixel tracking-wider flex items-center justify-center gap-2 transition-transform ${
               isFormValid
-                ? 'btn-block bg-blockGrass hover:bg-emerald-500 text-white cursor-pointer hover:-translate-y-0.5'
+                ? 'btn-block bg-blockGrass hover:bg-emerald-500 text-white cursor-pointer hover:-translate-y-0.5 shadow-block-sm'
                 : 'bg-gray-300 text-gray-500 border-[3px] border-gray-400 cursor-not-allowed'
             }`}
           >
-            ⚔️ CARI LAWAN SEKARANG
+            {gameMode === 'PRACTICE' ? (
+              <>
+                <Bot className="w-4 h-4" />
+                <span>MULAI LATIHAN LAWAN BOT</span>
+              </>
+            ) : (
+              <>
+                <Users className="w-4 h-4" />
+                <span>LANJUT KE ROOM LOBBY</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
       </div>
