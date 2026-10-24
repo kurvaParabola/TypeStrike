@@ -3,12 +3,14 @@ import type { Player, CombatWord, FloatingText, PlayerRole } from '../types';
 import { Avatar } from './Avatar';
 import { sound } from '../services/sound';
 import { getNextCombatWord, calculateSpeedDamage } from '../services/matchEngine';
+import { p2p } from '../services/p2p';
 import { Shield, Flame, Zap, Heart, Swords, Wand2, Crosshair } from 'lucide-react';
 
 interface ArenaProps {
   player: Player;
   opponent: Player;
   screenShake: boolean;
+  isP2p?: boolean;
   onUpdatePlayerHp: (newHp: number, shieldActive: boolean) => void;
   onUpdateOpponentHp: (newHp: number, shieldActive: boolean) => void;
   onMatchFinished: (winnerId: string, highestCrit: number) => void;
@@ -18,6 +20,7 @@ export const Arena: React.FC<ArenaProps> = ({
   player,
   opponent,
   screenShake,
+  isP2p = false,
   onUpdatePlayerHp,
   onUpdateOpponentHp,
   onMatchFinished,
@@ -150,9 +153,9 @@ export const Arena: React.FC<ArenaProps> = ({
     }, 420);
   };
 
-  // 4. Opponent Bot Attack Loop (Types word every 0.9s - 1.5s)
+  // 4A. Opponent Bot Attack Loop (ONLY for Practice Mode vs AI)
   useEffect(() => {
-    if (countdown !== null || isMatchOver.current) return;
+    if (isP2p || countdown !== null || isMatchOver.current) return;
 
     const botAttackInterval = setInterval(() => {
       if (isMatchOver.current) return;
@@ -207,7 +210,64 @@ export const Arena: React.FC<ArenaProps> = ({
     }, 1100 + Math.random() * 600);
 
     return () => clearInterval(botAttackInterval);
-  }, [countdown, player.hp, player.shieldActive, opponent.id, onUpdatePlayerHp, onMatchFinished, screenShake, highestCrit]);
+  }, [isP2p, countdown, player.hp, player.shieldActive, opponent.id, onUpdatePlayerHp, onMatchFinished, screenShake, highestCrit]);
+
+  // 4B. Real-Time P2P Message Receiver (For 1v1 PvP Battles between 2 Real Players)
+  useEffect(() => {
+    if (!isP2p) return;
+
+    p2p.onMessage((msg: any) => {
+      if (isMatchOver.current) return;
+
+      if (msg.type === 'ATTACK') {
+        const { damage, char, buffType, isCrit, isFinisher } = msg;
+
+        // Opponent fired an attack projectile at local player!
+        spawnProjectile(char || 'SERANG', 'opponent', buffType, isFinisher, opponent.role);
+
+        // ROGUE Passive: 15% chance to dodge attack
+        if (player.role === 'ROGUE' && Math.random() < 0.15) {
+          sound.playShield();
+          spawnFloatingText('DODGE!', 'shield', 'player');
+          p2p.send({ type: 'REMATCH_OFFER' }); // signal dodge
+          return;
+        }
+
+        if (player.shieldActive) {
+          // Blocked by shield
+          sound.playShield();
+          onUpdatePlayerHp(player.hp, false);
+          spawnFloatingText('BLOCKED!', 'shield', 'player');
+          return;
+        }
+
+        // Apply real damage to local player
+        const newPlayerHp = Math.max(0, player.hp - damage);
+        setOpponentAttacking(true);
+        setPlayerHit(true);
+        sound.playHit();
+
+        if (screenShake) {
+          setIsShaking(true);
+          setTimeout(() => setIsShaking(false), 300);
+        }
+
+        spawnFloatingText(`-${damage}`, isCrit ? 'crit' : 'damage', 'player');
+        onUpdatePlayerHp(newPlayerHp, false);
+
+        setTimeout(() => {
+          setOpponentAttacking(false);
+          setPlayerHit(false);
+        }, 350);
+
+        // If local player died, finish match (opponent wins)
+        if (newPlayerHp <= 0) {
+          isMatchOver.current = true;
+          onMatchFinished(opponent.id, highestCrit);
+        }
+      }
+    });
+  }, [isP2p, player.hp, player.shieldActive, player.role, opponent.id, opponent.role, screenShake, highestCrit, onUpdatePlayerHp, onMatchFinished]);
 
   // 5. Handle typing input (case-insensitive, fast feedback, flying letters)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,6 +372,18 @@ export const Arena: React.FC<ArenaProps> = ({
       setPlayerAttacking(false);
       setOpponentHit(false);
     }, 350);
+
+    // If real P2P match, broadcast attack to opponent's device!
+    if (isP2p) {
+      p2p.send({
+        type: 'ATTACK',
+        damage,
+        char: currentWord.word,
+        buffType: currentWord.buffType,
+        isCrit,
+        isFinisher: true,
+      });
+    }
 
     // Update combo
     setComboStreak((c) => c + 1);

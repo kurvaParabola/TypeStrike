@@ -31,9 +31,11 @@ export function App() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<string>('0.00');
 
-  // Room State
+  // Room & P2P State
   const [_roomCode, setRoomCode] = useState<string>('');
   const [_wagerAmount, setWagerAmount] = useState<string>('0.10');
+  const [isP2pMatch, setIsP2pMatch] = useState<boolean>(false);
+  const [onchainTxHash, setOnchainTxHash] = useState<string | null>(null);
 
   // Player state & LocalStorage persistence
   const [nickname, setNickname] = useState<string>(() => {
@@ -112,13 +114,23 @@ export function App() {
 
   // Start with AI bot directly (Practice Mode)
   const handlePlayWithBot = () => {
+    setIsP2pMatch(false);
+    setOnchainTxHash(null);
     const matchedOpponent = createAiBot();
     setOpponent(matchedOpponent);
     setScreen('VERSUS');
   };
 
-  // Start match from Room Lobby (Wager Mode)
-  const handleStartRoomMatch = (matchedOpponent: Player, wager: string, code: string) => {
+  // Start match from Room Lobby (1v1 P2P / Wager Mode)
+  const handleStartRoomMatch = (
+    matchedOpponent: Player,
+    wager: string,
+    code: string,
+    isP2p: boolean = true,
+    txHash?: string
+  ) => {
+    setIsP2pMatch(isP2p);
+    setOnchainTxHash(txHash || null);
     setOpponent(matchedOpponent);
     setWagerAmount(wager);
     setRoomCode(code);
@@ -197,7 +209,7 @@ export function App() {
       averageWpm: 75,
       accuracy: 98,
       matchDurationSecs: durationSecs,
-      onchainTxHash: '0x54dF...A994',
+      onchainTxHash: onchainTxHash || '0x54dF...A994',
     };
   };
 
@@ -307,6 +319,7 @@ export function App() {
             player={player}
             opponent={opponent}
             screenShake={screenShake}
+            isP2p={isP2pMatch}
             onUpdatePlayerHp={handleUpdatePlayerHp}
             onUpdateOpponentHp={handleUpdateOpponentHp}
             onMatchFinished={handleMatchFinished}

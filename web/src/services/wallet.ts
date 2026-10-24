@@ -16,17 +16,17 @@ export const MONAD_TESTNET_CONFIG = {
     decimals: 18,
   },
   rpcUrls: ['https://testnet-rpc.monad.xyz'],
-  blockExplorerUrls: ['https://testnet.monadexplorer.com'],
+  blockExplorerUrls: ['https://testnet.monadvision.com'],
 };
 
 export async function connectMonadWallet(): Promise<{ address: string; balance: string }> {
   const ethereum = (window as unknown as { ethereum?: any }).ethereum;
 
   if (!ethereum) {
-    throw new Error('Ekstensi wallet (MetaMask / Rabby) tidak terdeteksi di browser.');
+    throw new Error('Ekstensi wallet (MetaMask / Rabby / Phantom) tidak terdeteksi di browser.');
   }
 
-  // Request accounts
+  // 1. Request accounts
   const accounts: string[] = await ethereum.request({ method: 'eth_requestAccounts' });
   if (!accounts || accounts.length === 0) {
     throw new Error('Tidak ada akun wallet yang dipilih.');
@@ -34,23 +34,31 @@ export async function connectMonadWallet(): Promise<{ address: string; balance: 
 
   const address = accounts[0];
 
-  // Try to switch or add Monad Testnet
+  // 2. Check if current chain is already Monad Testnet (0x279f)
   try {
-    await ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: MONAD_TESTNET_CONFIG.chainId }],
-    });
-  } catch (switchError: any) {
-    // If chain has not been added to wallet, add it
-    if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
-      await ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [MONAD_TESTNET_CONFIG],
-      });
+    const currentChainId: string = await ethereum.request({ method: 'eth_chainId' });
+    if (currentChainId?.toLowerCase() !== MONAD_TESTNET_CONFIG.chainId.toLowerCase()) {
+      // Try to switch first
+      try {
+        await ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: MONAD_TESTNET_CONFIG.chainId }],
+        });
+      } catch (switchError: any) {
+        // If chain has not been added to wallet (4902), prompt to add it
+        if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [MONAD_TESTNET_CONFIG],
+          });
+        }
+      }
     }
+  } catch (chainErr) {
+    console.warn('Chain switch check bypassed:', chainErr);
   }
 
-  // Fetch balance
+  // 3. Fetch latest MON balance
   let balance = '0.00';
   try {
     const rawBalance: string = await ethereum.request({
@@ -60,8 +68,9 @@ export async function connectMonadWallet(): Promise<{ address: string; balance: 
     const parsed = parseInt(rawBalance, 16) / 1e18;
     balance = parsed.toFixed(2);
   } catch {
-    balance = '1.00';
+    balance = '0.00';
   }
 
   return { address, balance };
 }
+

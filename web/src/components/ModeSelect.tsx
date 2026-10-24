@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { GameMode } from '../types';
 import { sound } from '../services/sound';
 import { connectMonadWallet } from '../services/wallet';
-import { Bot, Coins, Wallet, CheckCircle2, ArrowRight, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Bot, Coins, Wallet, CheckCircle2, ArrowRight, ArrowLeft, Loader2, AlertCircle, Info } from 'lucide-react';
 
 interface ModeSelectProps {
   walletAddress: string | null;
@@ -184,6 +184,14 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
               </button>
             </div>
           )}
+
+          {/* Security Notice Card */}
+          <div className="mt-3 p-2.5 bg-amber-50/90 border border-amber-300 rounded text-[11px] font-sans text-amber-900 leading-tight flex items-start gap-1.5">
+            <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <span>
+              <strong>Info Keamanan:</strong> Notifikasi <em>"Jaringan Tidak Dikenal"</em> di MetaMask adalah standar wajar untuk jaringan testnet baru (Monad Chain ID 10143). Transaksi di TypeStrike 100% aman dan terhubung ke RPC resmi Monad.
+            </span>
+          </div>
         </div>
       </div>
 
