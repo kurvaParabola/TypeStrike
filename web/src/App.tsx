@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AvatarConfig, Player, GameScreen, GameMode, MatchStats } from './types';
+import type { AvatarConfig, Player, GameScreen, GameMode, PlayerRole, MatchStats } from './types';
 import { Header } from './components/Header';
 import { LandingPage } from './components/LandingPage';
 import { ModeSelect } from './components/ModeSelect';
@@ -10,6 +10,7 @@ import { Arena } from './components/Arena';
 import { MatchResult } from './components/MatchResult';
 import { sound } from './services/sound';
 import { createAiBot } from './services/matchEngine';
+import { getRoleDefinition } from './services/roles';
 import { Monitor } from 'lucide-react';
 
 const DEFAULT_AVATAR: AvatarConfig = {
@@ -56,13 +57,20 @@ export function App() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [screenShake, setScreenShake] = useState(true);
 
-  // Combatants with 100 HP
+  // Player role state
+  const [role, setRole] = useState<PlayerRole>(() => {
+    return (localStorage.getItem('blocktype_role') as PlayerRole) || 'FIGHTER';
+  });
+
+  // Combatants with dynamic HP based on role
+  const initialRoleDef = getRoleDefinition(role);
   const [player, setPlayer] = useState<Player>({
     id: 'p1',
     nickname: nickname || 'Pendekar',
     avatar: avatar,
-    hp: 100,
-    maxHp: 100,
+    role: role,
+    hp: initialRoleDef.baseHp,
+    maxHp: initialRoleDef.baseHp,
     shieldActive: false,
     hits: 0,
     wpm: 0,
@@ -82,6 +90,17 @@ export function App() {
   useEffect(() => {
     localStorage.setItem('blocktype_avatar', JSON.stringify(avatar));
   }, [avatar]);
+
+  useEffect(() => {
+    localStorage.setItem('blocktype_role', role);
+    const roleDef = getRoleDefinition(role);
+    setPlayer((prev) => ({
+      ...prev,
+      role: role,
+      hp: roleDef.baseHp,
+      maxHp: roleDef.baseHp,
+    }));
+  }, [role]);
 
   useEffect(() => {
     setPlayer((prev) => ({
@@ -108,10 +127,11 @@ export function App() {
 
   // Transition from Versus screen to Arena
   const handleVersusComplete = () => {
+    const roleDef = getRoleDefinition(role);
     setPlayer((prev) => ({
       ...prev,
-      hp: 100,
-      maxHp: 100,
+      hp: roleDef.baseHp,
+      maxHp: roleDef.baseHp,
       shieldActive: false,
     }));
 
@@ -119,8 +139,7 @@ export function App() {
       prev
         ? {
             ...prev,
-            hp: 100,
-            maxHp: 100,
+            hp: prev.maxHp,
             shieldActive: false,
           }
         : createAiBot()
@@ -244,6 +263,8 @@ export function App() {
               onNicknameChange={setNickname}
               avatar={avatar}
               onAvatarChange={setAvatar}
+              role={role}
+              onRoleChange={setRole}
               gameMode={gameMode}
               onProceed={() => {
                 if (gameMode === 'PRACTICE') {

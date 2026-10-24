@@ -140,7 +140,9 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
             <span className="font-pixel text-sm font-bold text-blockText block">
               {player.nickname}
             </span>
-            <span className="text-[10px] font-mono text-blockGrass font-bold">READY</span>
+            <span className="text-[10px] font-pixel text-blockGrass font-bold block">
+              [{player.role}] · {player.maxHp} HP
+            </span>
           </div>
         </div>
 
@@ -164,15 +166,8 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
               <span className="font-pixel text-sm font-bold text-blockText block">
                 {opponent.nickname}
               </span>
-              <span className={`text-[10px] font-mono font-bold ${opponent.isBot ? 'text-amber-600' : 'text-blockSky'}`}>
-                {opponent.isBot ? (
-                  <span className="flex items-center justify-center gap-1">
-                    <Bot className="w-3 h-3" />
-                    <span>AI BOT</span>
-                  </span>
-                ) : (
-                  'READY'
-                )}
+              <span className="text-[10px] font-pixel text-blockSky font-bold block">
+                [{opponent.role}] · {opponent.maxHp} HP
               </span>
             </div>
           </div>

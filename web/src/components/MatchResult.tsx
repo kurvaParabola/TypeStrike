@@ -61,9 +61,10 @@ export const MatchResult: React.FC<MatchResultProps> = ({
 
   const handleShare = () => {
     sound.playClick();
+    const deployLink = typeof window !== 'undefined' ? window.location.origin : 'https://typestrike.vercel.app';
     const shareText = `BlockType Duel di Monad!\n${
       isWinner ? 'K.O. VICTORY!' : 'Kalah duel!'
-    }\nSisa HP: ${stats.player1FinalHp} HP vs ${stats.player2FinalHp} HP\nSerangan Crit Tertinggi: ${stats.highestCritDamage} DMG\nMainkan sekarang: https://github.com/kurvaParabola/TypeStrike`;
+    }\nSisa HP: ${stats.player1FinalHp} HP vs ${stats.player2FinalHp} HP\nSerangan Crit Tertinggi: ${stats.highestCritDamage} DMG\nMainkan sekarang: ${deployLink}`;
 
     navigator.clipboard.writeText(shareText);
     setCopied(true);

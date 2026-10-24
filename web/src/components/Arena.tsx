@@ -162,6 +162,13 @@ export const Arena: React.FC<ArenaProps> = ({
       // Bot attacks player
       const botDamage = 10 + Math.floor(Math.random() * 8);
 
+      // ROGUE Passive: 15% chance to dodge attack
+      if (player.role === 'ROGUE' && Math.random() < 0.15) {
+        sound.playShield();
+        spawnFloatingText('DODGE!', 'shield', 'player');
+        return;
+      }
+
       if (player.shieldActive) {
         // Player blocks attack with shield!
         sound.playShield();
@@ -238,7 +245,7 @@ export const Arena: React.FC<ArenaProps> = ({
   // 5. Word Completed Handler: deals damage, applies buffs, advances word
   const handleWordCompleted = () => {
     const elapsedMs = Math.max(Date.now() - wordStartTime, 150);
-    const { damage, isCrit, speedTier } = calculateSpeedDamage(elapsedMs, currentWord.buffType);
+    const { damage, isCrit, speedTier } = calculateSpeedDamage(elapsedMs, currentWord.buffType, player.role);
 
     // Update highest crit stat
     if (damage > highestCrit) {
@@ -261,7 +268,7 @@ export const Arena: React.FC<ArenaProps> = ({
 
     if (currentWord.buffType === 'HEAL') {
       sound.playHeal();
-      newPlayerHp = Math.min(100, player.hp + 25);
+      newPlayerHp = Math.min(player.maxHp, player.hp + 25);
       spawnFloatingText('+25 HP!', 'heal', 'player');
     } else if (currentWord.buffType === 'SHIELD') {
       sound.playShield();
@@ -273,7 +280,11 @@ export const Arena: React.FC<ArenaProps> = ({
 
     // Deal damage to opponent
     let newOpponentHp = opponent.hp;
-    if (opponent.shieldActive) {
+    if (opponent.role === 'ROGUE' && Math.random() < 0.15) {
+      // Opponent Rogue dodged!
+      sound.playShield();
+      spawnFloatingText('DODGE!', 'shield', 'opponent');
+    } else if (opponent.shieldActive) {
       // Opponent shielded
       sound.playShield();
       onUpdateOpponentHp(opponent.hp, false);
@@ -316,9 +327,10 @@ export const Arena: React.FC<ArenaProps> = ({
   };
 
   // Helper for HP Bar color
-  const getHpColor = (hp: number) => {
-    if (hp > 50) return 'bg-blockGrass';
-    if (hp > 30) return 'bg-blockSun';
+  const getHpColor = (hp: number, maxHp: number) => {
+    const percent = (hp / maxHp) * 100;
+    if (percent > 50) return 'bg-blockGrass';
+    if (percent > 30) return 'bg-blockSun';
     return 'bg-blockCoral animate-pulse';
   };
 
@@ -347,17 +359,18 @@ export const Arena: React.FC<ArenaProps> = ({
           {/* Player HP Bar */}
           <div>
             <div className="flex items-center justify-between font-pixel text-xs mb-1">
-              <span className="text-blockText font-bold truncate max-w-[120px]">
-                {player.nickname}
+              <span className="text-blockText font-bold truncate max-w-[140px] flex items-center gap-1">
+                <span>{player.nickname}</span>
+                <span className="text-[10px] text-gray-500 font-pixel">[{player.role}]</span>
               </span>
               <span className={`font-mono font-bold ${player.hp <= 30 ? 'text-blockCoral' : 'text-gray-700'}`}>
-                {player.hp} / 100 HP
+                {player.hp} / {player.maxHp} HP
               </span>
             </div>
             <div className="w-full bg-gray-200 border-2 border-blockText h-4 rounded-xs overflow-hidden relative shadow-inner">
               <div
-                className={`h-full transition-all duration-200 ${getHpColor(player.hp)}`}
-                style={{ width: `${player.hp}%` }}
+                className={`h-full transition-all duration-200 ${getHpColor(player.hp, player.maxHp)}`}
+                style={{ width: `${(player.hp / player.maxHp) * 100}%` }}
               />
               {player.shieldActive && (
                 <div className="absolute inset-0 bg-sky-500/60 border border-sky-300 flex items-center justify-center font-pixel text-[9px] text-white gap-1">
@@ -371,17 +384,18 @@ export const Arena: React.FC<ArenaProps> = ({
           {/* Opponent HP Bar */}
           <div>
             <div className="flex items-center justify-between font-pixel text-xs mb-1">
-              <span className="text-blockText font-bold truncate max-w-[120px]">
-                {opponent.nickname}
+              <span className="text-blockText font-bold truncate max-w-[140px] flex items-center gap-1">
+                <span>{opponent.nickname}</span>
+                <span className="text-[10px] text-gray-500 font-pixel">[{opponent.role}]</span>
               </span>
               <span className={`font-mono font-bold ${opponent.hp <= 30 ? 'text-blockCoral' : 'text-gray-700'}`}>
-                {opponent.hp} / 100 HP
+                {opponent.hp} / {opponent.maxHp} HP
               </span>
             </div>
             <div className="w-full bg-gray-200 border-2 border-blockText h-4 rounded-xs overflow-hidden relative shadow-inner">
               <div
-                className={`h-full transition-all duration-200 ${getHpColor(opponent.hp)}`}
-                style={{ width: `${opponent.hp}%` }}
+                className={`h-full transition-all duration-200 ${getHpColor(opponent.hp, opponent.maxHp)}`}
+                style={{ width: `${(opponent.hp / opponent.maxHp) * 100}%` }}
               />
               {opponent.shieldActive && (
                 <div className="absolute inset-0 bg-sky-500/60 border border-sky-300 flex items-center justify-center font-pixel text-[9px] text-white gap-1">

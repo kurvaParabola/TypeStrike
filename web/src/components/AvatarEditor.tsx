@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import type { AvatarConfig, HairStyle, FaceExpression, Accessory, GameMode } from '../types';
+import type { AvatarConfig, HairStyle, FaceExpression, Accessory, GameMode, PlayerRole } from '../types';
 import { Avatar } from './Avatar';
 import { sound } from '../services/sound';
+import { ROLES, getRoleDefinition } from '../services/roles';
 import {
   Sparkles,
   Dices,
@@ -15,6 +16,11 @@ import {
   Users,
   ArrowLeft,
   ArrowRight,
+  Swords,
+  Wand2,
+  Crosshair,
+  Shield,
+  Zap,
 } from 'lucide-react';
 
 interface AvatarEditorProps {
@@ -22,6 +28,8 @@ interface AvatarEditorProps {
   onNicknameChange: (name: string) => void;
   avatar: AvatarConfig;
   onAvatarChange: (config: AvatarConfig) => void;
+  role: PlayerRole;
+  onRoleChange: (role: PlayerRole) => void;
   gameMode?: GameMode;
   onProceed: () => void;
   onBack?: () => void;
@@ -74,12 +82,16 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
   onNicknameChange,
   avatar,
   onAvatarChange,
+  role = 'FIGHTER',
+  onRoleChange,
   gameMode = 'PRACTICE',
   onProceed,
   onBack,
 }) => {
   const [activeTab, setActiveTab] = useState<'skin' | 'hair' | 'face' | 'clothes' | 'acc'>('skin');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const selectedRoleDef = getRoleDefinition(role);
 
   const handleNicknameChange = (val: string) => {
     // Only allow alphanumeric and spaces, 3-12 chars
@@ -142,9 +154,15 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
         <div className="my-6 py-4 flex flex-col items-center justify-center">
           <Avatar config={avatar} animation="idle" size="lg" showBadge="KAMU" />
           <div className="mt-4 px-4 py-1.5 bg-white border-2 border-blockText rounded shadow-block-sm text-center">
-            <span className="font-pixel text-sm font-bold text-blockText">
+            <span className="font-pixel text-sm font-bold text-blockText block">
               {nickname.trim() || 'Tamu_Blok'}
             </span>
+            <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 bg-blockCream border border-blockText rounded-full text-[10px] font-pixel text-blockText font-bold">
+              {role === 'FIGHTER' && <Swords className="w-3 h-3 text-amber-600" />}
+              {role === 'WIZARD' && <Wand2 className="w-3 h-3 text-purple-600" />}
+              {role === 'ROGUE' && <Crosshair className="w-3 h-3 text-emerald-600" />}
+              <span>{role} · {selectedRoleDef.baseHp} HP</span>
+            </div>
           </div>
         </div>
 
@@ -158,7 +176,7 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
       <div className="w-full md:w-7/12 card-block p-6 flex flex-col justify-between bg-white">
         <div>
           {/* Nickname Input (F-01) */}
-          <div className="mb-5">
+          <div className="mb-4">
             <label className="block font-pixel text-xs text-blockText mb-2 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5" /> NICKNAME (3-12 KARAKTER)
             </label>
@@ -181,6 +199,57 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
                 <span>{errorMsg}</span>
               </p>
             )}
+          </div>
+
+          {/* Role / Class Selection */}
+          <div className="mb-5">
+            <label className="block font-pixel text-xs text-blockText mb-2 flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" /> PILIH ROLE / CLASS (3 PILIHAN)
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {ROLES.map((r) => {
+                const isSelected = role === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      onRoleChange(r.id);
+                    }}
+                    className={`p-2.5 rounded border-2 border-blockText text-left transition-all ${
+                      isSelected
+                        ? r.id === 'FIGHTER'
+                          ? 'bg-amber-100 ring-2 ring-blockSun scale-[1.02] shadow-block-sm'
+                          : r.id === 'WIZARD'
+                          ? 'bg-purple-100 ring-2 ring-blockPurple scale-[1.02] shadow-block-sm'
+                          : 'bg-emerald-100 ring-2 ring-blockGrass scale-[1.02] shadow-block-sm'
+                        : 'bg-gray-50 hover:bg-gray-100 opacity-80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      {r.id === 'FIGHTER' && <Swords className="w-4 h-4 text-amber-600" />}
+                      {r.id === 'WIZARD' && <Wand2 className="w-4 h-4 text-purple-600" />}
+                      {r.id === 'ROGUE' && <Crosshair className="w-4 h-4 text-emerald-600" />}
+                      <span className="font-mono text-[10px] font-bold text-gray-600">{r.baseHp} HP</span>
+                    </div>
+                    <div className="font-pixel text-[11px] font-bold text-blockText truncate">
+                      {r.id}
+                    </div>
+                    <div className="text-[10px] font-sans text-gray-500 leading-tight mt-0.5 line-clamp-1">
+                      {r.passiveName}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Active role passive explanation */}
+            <div className="mt-2 p-2 bg-blockCream border border-blockText rounded-xs text-[11px] font-sans text-gray-700 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-blockSun shrink-0" />
+              <span>
+                <strong>{selectedRoleDef.passiveName}:</strong> {selectedRoleDef.passiveDesc}
+              </span>
+            </div>
           </div>
 
           {/* Customization Tabs */}

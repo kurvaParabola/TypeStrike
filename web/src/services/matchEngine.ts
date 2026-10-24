@@ -1,4 +1,5 @@
-import type { AvatarConfig, Player, CombatWord, WordBuffType } from '../types';
+import type { AvatarConfig, Player, CombatWord, WordBuffType, PlayerRole } from '../types';
+import { getRoleDefinition } from './roles';
 
 // Curated 4-5 character Indonesian basic combat words
 export const BASIC_WORDS: string[] = [
@@ -63,12 +64,12 @@ function pickRandom(list: string[], exclude?: string): string {
 }
 
 /**
- * Calculates attack damage based on typing speed (faster = higher damage)
- * and active buff multipliers.
+ * Calculates attack damage based on typing speed, active buffs, and role passives.
  */
 export function calculateSpeedDamage(
   timeTakenMs: number,
-  buffType: WordBuffType
+  buffType: WordBuffType,
+  playerRole?: PlayerRole
 ): { damage: number; isCrit: boolean; speedTier: string } {
   let baseDamage = 11;
   let isCrit = false;
@@ -94,6 +95,12 @@ export function calculateSpeedDamage(
     speedTier = 'LAMBAT';
   }
 
+  // WIZARD Passive: +5 bonus damage on Critical attacks
+  if (playerRole === 'WIZARD' && isCrit) {
+    baseDamage += 5;
+    speedTier = `ARCANE ${speedTier}`;
+  }
+
   // Apply 2X Damage Buff if active
   if (buffType === 'DOUBLE_DMG') {
     baseDamage *= 2;
@@ -104,27 +111,32 @@ export function calculateSpeedDamage(
   return { damage: baseDamage, isCrit, speedTier };
 }
 
-// Bot Generator with 100 HP
-export function createAiBot(): Player {
-  const botNames = ['Bot_Kilat', 'Bot_Voxel', 'Bot_Monad', 'Bot_Ninja'];
+// Bot Generator with Role Assignment
+export function createAiBot(preferredRole?: PlayerRole): Player {
+  const botNames = ['Pendekar_Voxel', 'Penyihir_Monad', 'Ninja_Bayangan', 'Bot_Kilat'];
   const name = botNames[Math.floor(Math.random() * botNames.length)];
+
+  const possibleRoles: PlayerRole[] = ['FIGHTER', 'WIZARD', 'ROGUE'];
+  const role: PlayerRole = preferredRole || possibleRoles[Math.floor(Math.random() * possibleRoles.length)];
+  const roleDef = getRoleDefinition(role);
 
   const botAvatar: AvatarConfig = {
     skinTone: '#E4B588',
-    hairStyle: 'spiky',
-    hairColor: '#EF6F61',
+    hairStyle: role === 'WIZARD' ? 'pompadour' : role === 'ROGUE' ? 'short' : 'spiky',
+    hairColor: role === 'WIZARD' ? '#8E44AD' : role === 'ROGUE' ? '#2B3440' : '#E67E22',
     expression: 'determined',
-    shirtColor: '#4FA8E0',
+    shirtColor: role === 'WIZARD' ? '#9B84D9' : role === 'ROGUE' ? '#2B3440' : '#EF6F61',
     pantsColor: '#2B3440',
-    accessory: 'headband',
+    accessory: role === 'WIZARD' ? 'crown' : role === 'ROGUE' ? 'headband' : 'none',
   };
 
   return {
     id: `bot_${Date.now()}`,
     nickname: name,
     avatar: botAvatar,
-    hp: 100,
-    maxHp: 100,
+    role: role,
+    hp: roleDef.baseHp,
+    maxHp: roleDef.baseHp,
     shieldActive: false,
     hits: 0,
     wpm: 70,

@@ -174,6 +174,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                   </p>
                 </div>
               </div>
+
+              <div className="flex items-start gap-3 p-3 bg-blockCream border border-blockText rounded-xs">
+                <div className="w-7 h-7 rounded bg-amber-500 text-white flex items-center justify-center font-pixel text-xs shrink-0 mt-0.5">
+                  5
+                </div>
+                <div>
+                  <h4 className="font-pixel text-xs text-blockText font-bold mb-1">
+                    3 Pilihan Role / Class Karakter
+                  </h4>
+                  <p>
+                    Sesuaikan gaya bertarungmu sebelum bertanding:
+                  </p>
+                  <ul className="mt-1 list-disc list-inside space-y-0.5 text-gray-600">
+                    <li><strong>FIGHTER (110 HP)</strong>: Tubuh baja lebih tangguh menghadapi gempuran.</li>
+                    <li><strong>WIZARD (95 HP)</strong>: Arcane Burst memberi bonus +5 damage pada Hyper Crit.</li>
+                    <li><strong>ROGUE (100 HP)</strong>: Refleks bayangan dengan 15% peluang Dodge otomatis menangkis serangan lawan.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
             <div className="mt-5 pt-3 border-t-2 border-gray-100 flex justify-end">

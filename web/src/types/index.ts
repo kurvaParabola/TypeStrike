@@ -29,10 +29,22 @@ export interface FloatingText {
   target: 'player' | 'opponent';
 }
 
+export type PlayerRole = 'FIGHTER' | 'WIZARD' | 'ROGUE';
+
+export interface RoleDefinition {
+  id: PlayerRole;
+  name: string;
+  tagline: string;
+  passiveName: string;
+  passiveDesc: string;
+  baseHp: number;
+}
+
 export interface Player {
   id: string;
   nickname: string;
   avatar: AvatarConfig;
+  role: PlayerRole;
   hp: number;
   maxHp: number;
   shieldActive: boolean;
